@@ -24,7 +24,7 @@ import static org.springframework.ai.openai.api.OpenAiApi.ChatModel.GPT_3_5_TURB
 public class CalculatorController {
 
     private static final Logger logger = LoggerFactory.getLogger(CalculatorController.class);
-    private static final String OPENAI_API_KEY = "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";
+    private static final String OPENAI_API_KEY = "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";
 
     @PostMapping("/auth/askme")
     public ResponseEntity<CalculatorResponse> askMe(@RequestBody CalculatorRequest request) {

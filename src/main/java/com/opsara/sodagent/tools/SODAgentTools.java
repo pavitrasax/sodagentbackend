@@ -6,6 +6,7 @@ import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
+import java.util.ArrayList;
 import java.util.List;
 
 public class SODAgentTools {
@@ -47,7 +48,7 @@ public class SODAgentTools {
         "Is hand sanitizer available at entrance and cash counter?"
     );
 
-    @Tool("On getting an affirmation from the user around initialise SODChecklist Agent, this tool will initialize the agent and show the list of check points to track.")
+    @Tool("Initialise SOD Agent with a list of sample check points to track daily.")
     String init() {
 
        String response = "Thank you. Lets understand what all you want to track. Showing you a few of sample check points. Let me know if you want to go ahead with these or edit them.";
@@ -66,7 +67,7 @@ public class SODAgentTools {
     }
 
 
-    @Tool("On getting an affirmation from the user about his intent around downloading a complete checklst, this tool will return a link to a SODChecks.txt file")
+    @Tool("Download a SOD checklist file containing all the check points.")
     String download() {
         // Path where static files are served from (Spring Boot default: src/main/resources/static)
         //String staticDir = "src/main/resources/static";
@@ -84,7 +85,30 @@ public class SODAgentTools {
         // Construct the public URL (adjust baseUrl as needed)
         String baseUrl = "http://localhost:8080/"; // Change to your actual domain if deployed
         String completeUrl = baseUrl + fileName;
-        String downLoadLink = "<a href=\"" + completeUrl + "\" download>Download SODChecks.txt</a>";
+        String downLoadLink = "<a href=\"" + completeUrl + "\" target=\"_blank\">Download SODChecks.txt</a>";
         return downLoadLink;
+    }
+
+    @Tool("Parses CSV and extracts mobile numbers to return a List of Strings containing mobile numbers.")
+    List<String> extractMobileNumbersFromCSV(String csvMobiles) {
+        List<String> mobileNumbers = new ArrayList<>();
+        String[] lines = csvMobiles.split("\n");
+        for (String line : lines) {
+            String[] parts = line.split(",");
+            for (String part : parts) {
+                part = part.trim();
+                if (!part.isEmpty() && part.matches("\\d{10}")) { // Assuming 10-digit mobile numbers
+                    mobileNumbers.add(part);
+                }
+            }
+        }
+        return mobileNumbers;
+    }
+    @Tool("Rolls out the checklist to provided mobile numbers.")
+    String rollout(List<String> mobileNumbers) {
+        if(mobileNumbers.isEmpty()) {
+            return "No mobile numbers provided. Please provide a list of mobile numbers to send the checklist.";
+        }
+        return "We have stored the mobile numbers and would send them whatsapp messages to fill in checklist";
     }
 }
