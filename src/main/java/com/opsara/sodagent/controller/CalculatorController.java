@@ -17,6 +17,7 @@ import dev.langchain4j.service.AiServices;
 
 import static org.springframework.ai.openai.api.OpenAiApi.ChatModel.GPT_4_O_MINI;
 import static org.springframework.ai.openai.api.OpenAiApi.ChatModel.GPT_3_5_TURBO;
+import static com.opsara.sodagent.constants.Constants.OPENAI_API_KEY;
 
 @RestController
 @RequestMapping("/api")
@@ -24,7 +25,6 @@ import static org.springframework.ai.openai.api.OpenAiApi.ChatModel.GPT_3_5_TURB
 public class CalculatorController {
 
     private static final Logger logger = LoggerFactory.getLogger(CalculatorController.class);
-    private static final String OPENAI_API_KEY = "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";
 
     @PostMapping("/auth/askme")
     public ResponseEntity<CalculatorResponse> askMe(@RequestBody CalculatorRequest request) {

@@ -25,16 +25,15 @@ import java.nio.file.Paths;
 import java.nio.file.StandardCopyOption;
 import java.util.UUID;
 
+import static com.opsara.sodagent.constants.Constants.OPENAI_API_KEY;
+
+
 @RestController
 @RequestMapping("/sodagent")
 
 public class SODAgentController {
 
     private static final Logger logger = LoggerFactory.getLogger(SODAgentController.class);
-    private static final String OPENAI_API_KEY = "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";
-
-
-
 
     @PostMapping("/chat")
     public ResponseEntity<AgentResponse> chat(@RequestBody AgentRequest request) {
