@@ -9,12 +9,16 @@ public class CorsConfig implements WebMvcConfigurer {
     @Override
     public void addCorsMappings(CorsRegistry registry) {
         registry.addMapping("/**") // Apply CORS to all paths
-                .allowedOrigins("http://localhost:3001", "https://opsara.io",  "https://www.opsara.io",
+                .allowedOriginPatterns(
+                        "http://localhost:3001",
+                        "https://opsara.io",
+                        "https://www.opsara.io",
                         "https://*.replit.app",
                         "https://replit.app",
                         "https://*.replit.dev",
                         "https://replit.dev",
-                        "http://localhost:3000" ) // Allow requests from this origin
+                        "http://localhost:3000"
+                ) // Allow requests from this origin
                 .allowedMethods("*") // Allow all HTTP methods (GET, POST, PUT, DELETE, etc.)
                 .allowedHeaders("*") // Allow all headers
                 .allowCredentials(true) // Allow sending of credentials (cookies, HTTP authentication)
