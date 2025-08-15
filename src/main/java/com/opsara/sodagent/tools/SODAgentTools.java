@@ -1,16 +1,18 @@
 package com.opsara.sodagent.tools;
 
+import com.opsara.sodagent.controller.SODAgentController;
 import dev.langchain4j.agent.tool.Tool;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
-import java.io.IOException;
-import java.nio.file.Files;
-import java.nio.file.Path;
-import java.nio.file.Paths;
 import java.util.ArrayList;
 import java.util.List;
+import static com.opsara.sodagent.constants.Constants.CDN_BASE_URL;
 
 public class SODAgentTools {
 
+
+    private static final Logger logger = LoggerFactory.getLogger(SODAgentTools.class);
     private static final List<String> CHECK_POINTS = List.of(
         "Have doors been unlocked and the alarm system disabled?",
         "Have overnight security alerts or messages been reviewed?",
@@ -83,8 +85,8 @@ public class SODAgentTools {
         }*/
 
         // Construct the public URL (adjust baseUrl as needed)
-        String baseUrl = "http://localhost:8080/"; // Change to your actual domain if deployed
-        String completeUrl = baseUrl + fileName;
+        // Change to your actual domain if deployed
+        String completeUrl = CDN_BASE_URL + fileName;
         String downLoadLink = "<a href=\"" + completeUrl + "\" target=\"_blank\">Download SODChecks.txt</a>";
         return downLoadLink;
     }
@@ -110,5 +112,49 @@ public class SODAgentTools {
             return "No mobile numbers provided. Please provide a list of mobile numbers to send the checklist.";
         }
         return "We have stored the mobile numbers and would send them whatsapp messages to fill in checklist";
+    }
+
+
+    @Tool ("Returns Completion Status. It tells how many stores out of how many have completed the checklist.")
+    String returnCompletionStatus()
+    {
+        return "3 out of 19 stores have not yet completed the checklist. Let me know if you want to send a reminder to them.";
+    }
+
+    @Tool ("Reminder for completion. It sends a reminder to stores that have not completed the checklist.")
+    String sendCompletionReminder()
+    {
+        return "Reminder sent to stores that have not completed the checklist. They will receive a WhatsApp message shortly.";
+    }
+
+    @Tool( "Returns Leaderboard from top. It returns the list of top stores based on score they got as per checklist. Parameter numberofStoresToReturn represents how many stores from top would be returned")
+    String giveLeaderBoardfFomTop(int numberofStoresToReturn)
+    {
+        String returnString =  "Saket, Koramangala and Indiranagar are the top 3 stores based on the checklist score. <img src='"+CDN_BASE_URL+"leaderboard.png' alt='Leaderboard Image' />";
+        logger.info(returnString);
+        return returnString;
+    }
+
+    @Tool("Returns Detailed Report for a store. It returns the detailed report for a store with name storeName.")
+    String giveOneDetailedReport (String storeName) {
+        String message = "Detailed report for " + storeName + ":\n";
+        String completeUrl = CDN_BASE_URL + "Koramangala_LatestReport.pdf";
+        String downLoadLink = "<a href=\"" + completeUrl + "\" target=\"_blank\">Koramangala_LatestReport.pdf</a>";
+        return message+downLoadLink;
+    }
+
+    @Tool("Returns Most Problematic Check Points. It returns the list of most problematic check points based on the checklist filled by stores.")
+    String giveMostProblematicCheckPoints() {
+        return "Backroom light not working has been the most problematic check point for 5 stores.";
+    }
+
+    @Tool("Download Report. It generates a csv file report based on the date range provided and returns a download link.")
+    String downloadReport(String fromDate, String toDate) {
+        // Logic to generate and download report based on date range
+        // This is a placeholder implementation
+        String message =  "Report generated from " + fromDate + " to " + toDate + " for all stores. Please download here.";
+        String completeUrl = CDN_BASE_URL + "sodreport.csv";
+        String downLoadLink = "<a href=\"" + completeUrl + "\" target=\"_blank\">sodreport.csv</a>";
+        return message + downLoadLink;
     }
 }
