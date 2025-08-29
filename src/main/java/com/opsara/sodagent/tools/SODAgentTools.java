@@ -1,15 +1,28 @@
 package com.opsara.sodagent.tools;
 
 import com.opsara.sodagent.controller.SODAgentController;
+import com.opsara.sodagent.entities.OrganisationChecklist;
+import com.opsara.sodagent.services.SODAgentService;
 import dev.langchain4j.agent.tool.Tool;
+import lombok.Data;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.beans.factory.annotation.Autowired;
 
 import java.util.ArrayList;
 import java.util.List;
 import static com.opsara.sodagent.constants.Constants.CDN_BASE_URL;
 
+@Data
 public class SODAgentTools {
+
+
+
+    private SODAgentService service;
+
+    public SODAgentTools(SODAgentService service) {
+        this.service = service;
+    }
 
 
     private static final Logger logger = LoggerFactory.getLogger(SODAgentTools.class);
@@ -51,8 +64,9 @@ public class SODAgentTools {
     );
 
     @Tool("Initialise SOD Agent with a list of sample check points to track daily.")
-    String init() {
+    public String init() {
 
+        logger.info("Init called ....");
        String response = "Thank you. Lets understand what all you want to track. Showing you a few of sample check points. Let me know if you want to go ahead with these or edit them.";
        response += "\n 1. Have doors been unlocked and the alarm system disabled? ☐ Yes ☐ No ☐ N/A";
        response += "\n 2. Have overnight security alerts or messages been reviewed? ☐ Yes ☐ No ☐ N/A";
@@ -70,7 +84,10 @@ public class SODAgentTools {
 
 
     @Tool("Download a SOD checklist file containing all the check points.")
-    String download() {
+    public String download() {
+
+
+        logger.info("Download Called.");
         // Path where static files are served from (Spring Boot default: src/main/resources/static)
         //String staticDir = "src/main/resources/static";
         String fileName = "SODChecks.txt";
@@ -92,7 +109,8 @@ public class SODAgentTools {
     }
 
     @Tool("Parses CSV and extracts mobile numbers to return a List of Strings containing mobile numbers.")
-    List<String> extractMobileNumbersFromCSV(String csvMobiles) {
+    public List<String> extractMobileNumbersFromCSV(String csvMobiles) {
+        logger.info("Extract Mobile Numbers Called with csvMobiles: " + csvMobiles);
         List<String> mobileNumbers = new ArrayList<>();
         String[] lines = csvMobiles.split("\n");
         for (String line : lines) {
@@ -108,27 +126,40 @@ public class SODAgentTools {
     }
     @Tool("Rolls out the checklist to provided mobile numbers.")
     String rollout(List<String> mobileNumbers) {
+        logger.info("Rollout is called with mobile numbers. + mobileNumbers: " + mobileNumbers);
         if(mobileNumbers.isEmpty()) {
             return "No mobile numbers provided. Please provide a list of mobile numbers to send the checklist.";
         }
+
+        OrganisationChecklist checklist = service.fetchLatestActiveChecklist(Integer.valueOf(orgId));
+        if (checklist != null) {
+            if (checklist.getStatus() != 2) {
+                checklist.setStatus(3);
+            } else {
+                checklist.setStatus(5);
+            }
+            service.saveChecklist(checklist);
+        }
+
+
         return "We have stored the mobile numbers and would send them whatsapp messages to fill in checklist";
     }
 
 
     @Tool ("Returns Completion Status. It tells how many stores out of how many have completed the checklist.")
-    String returnCompletionStatus()
+    public String returnCompletionStatus()
     {
         return "3 out of 19 stores have not yet completed the checklist. Let me know if you want to send a reminder to them.";
     }
 
     @Tool ("Reminder for completion. It sends a reminder to stores that have not completed the checklist.")
-    String sendCompletionReminder()
+    public String sendCompletionReminder()
     {
         return "Reminder sent to stores that have not completed the checklist. They will receive a WhatsApp message shortly.";
     }
 
     @Tool( "Returns Leaderboard from top. It returns the list of top stores based on score they got as per checklist. Parameter numberofStoresToReturn represents how many stores from top would be returned")
-    String giveLeaderBoardfFomTop(int numberofStoresToReturn)
+    public String giveLeaderBoardfFomTop(int numberofStoresToReturn)
     {
         String returnString =  "Saket, Koramangala and Indiranagar are the top 3 stores based on the checklist score. <img src='"+CDN_BASE_URL+"leaderboard.png' alt='Leaderboard Image' />";
         logger.info(returnString);
@@ -136,7 +167,7 @@ public class SODAgentTools {
     }
 
     @Tool("Returns Detailed Report for a store. It returns the detailed report for a store with name storeName.")
-    String giveOneDetailedReport (String storeName) {
+    public String giveOneDetailedReport (String storeName) {
         String message = "Detailed report for " + storeName + ":\n";
         String completeUrl = CDN_BASE_URL + "Koramangala_LatestReport.pdf";
         String downLoadLink = "<a href=\"" + completeUrl + "\" target=\"_blank\">Koramangala_LatestReport.pdf</a>";
@@ -144,12 +175,12 @@ public class SODAgentTools {
     }
 
     @Tool("Returns Most Problematic Check Points. It returns the list of most problematic check points based on the checklist filled by stores.")
-    String giveMostProblematicCheckPoints() {
+    public String giveMostProblematicCheckPoints() {
         return "Backroom light not working has been the most problematic check point for 5 stores.";
     }
 
     @Tool("Download Report. It generates a csv file report based on the date range provided and returns a download link.")
-    String downloadReport(String fromDate, String toDate) {
+    public String downloadReport(String fromDate, String toDate) {
         // Logic to generate and download report based on date range
         // This is a placeholder implementation
         String message =  "Report generated from " + fromDate + " to " + toDate + " for all stores. Please download here.";
@@ -157,4 +188,15 @@ public class SODAgentTools {
         String downLoadLink = "<a href=\"" + completeUrl + "\" target=\"_blank\">sodreport.csv</a>";
         return message + downLoadLink;
     }
+
+    @Tool("Skip Edit Checklist. Skips the edit checklist reminder and starts for next stage which is rollout.")
+    public void skipEditReminder() {
+        logger.info("User chose to skip editing the checklist and proceed with rollout.");
+        service.markChecklistStatusAsTwo(Integer.valueOf(orgId));
+
+    }
+
+    private String orgId;
+    private String userCredential;
+    private String userCredentialType;
 }
