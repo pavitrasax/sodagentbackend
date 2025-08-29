@@ -342,6 +342,37 @@ public class SODAgentController {
 
 
 
+@GetMapping("/public/gettemplate")
+    public ResponseEntity<String> getTemplate(HttpServletRequest httpRequest) {
+        logger.info("/gettemplate called");
 
+        String hashToken = httpRequest.getParameter("hashtoken");
+
+
+    ObjectMapper mapper = new ObjectMapper();
+    boolean isValidJson = false;
+    String dataJson = null;
+
+
+    logger.info("Hashtoken: " + hashToken);
+
+
+    String orgId = null;
+
+
+
+    try {
+        String[] decryptedValues = URLGenerationUtil.reverseHash(hashToken);
+        Arrays.stream(decryptedValues).forEach(str -> logger.info("Decrypted Value: " + str));
+        orgId = decryptedValues[3];
+    } catch (Exception e) {
+        return ResponseEntity.badRequest().body("Invalid hashtoken");
+    }
+
+    OrganisationChecklist checklistEntity = sodagentService.fetchLatestActiveChecklist(Integer.valueOf(orgId));
+    String checklistTemplateJson = new String(checklistEntity.getChecklistJson().getBytes(), StandardCharsets.UTF_8);
+
+        return ResponseEntity.ok(checklistTemplateJson);
+    }
 
 }
