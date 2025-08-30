@@ -1,12 +1,14 @@
 package com.opsara.sodagent.services;
 
 
+import com.opsara.sodagent.dto.ProblematicCheckpoint;
 import com.opsara.sodagent.entities.OrganisationChecklist;
 import com.opsara.sodagent.entities.UserChecklistData;
 import com.opsara.sodagent.entities.WhatsappUser;
 import com.opsara.sodagent.repositories.OrganisationChecklistRepository;
 import com.opsara.sodagent.repositories.UserChecklistDataRepository;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -28,6 +30,9 @@ public class SODAgentService {
 
     @Autowired
     private WhatsappUserRepository whatsappUserRepository;
+
+    @Autowired
+    private JdbcTemplate jdbcTemplate;
 
     @Transactional
     public OrganisationChecklist saveChecklist(Integer orgId, String checklistJson) {
@@ -121,6 +126,35 @@ public class SODAgentService {
         user.setName(whatsAppUserName);
         user.setCreatedAt(LocalDateTime.now());
         return whatsappUserRepository.save(user);
+    }
+
+
+
+
+
+    public List<ProblematicCheckpoint> giveMostProblematicCheckPoints() {
+        String sql = """
+        SELECT
+          jsonb_data ->> 'question' AS question,
+          COUNT(*) AS no_count
+        FROM
+          sodagent.user_checklist_data,
+          jsonb_array_elements(data_json -> 'checklist_responses') AS jsonb_data
+        WHERE
+          jsonb_data ->> 'answer' = 'No'
+        GROUP BY
+          question
+        ORDER BY
+          no_count DESC
+        LIMIT 3
+        """;
+        return jdbcTemplate.query(
+                sql,
+                (rs, rowNum) -> new ProblematicCheckpoint(
+                        rs.getString("question"),
+                        rs.getInt("no_count")
+                )
+        );
     }
 
 }

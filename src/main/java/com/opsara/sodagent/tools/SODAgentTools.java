@@ -3,6 +3,7 @@ package com.opsara.sodagent.tools;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.opsara.sodagent.controller.SODAgentController;
+import com.opsara.sodagent.dto.ProblematicCheckpoint;
 import com.opsara.sodagent.entities.OrganisationChecklist;
 import com.opsara.sodagent.services.SODAgentService;
 import dev.langchain4j.agent.tool.Tool;
@@ -252,8 +253,8 @@ public class SODAgentTools {
     }
 
     @Tool("Returns Most Problematic Check Points. It returns the list of most problematic check points based on the checklist filled by stores.")
-    public String giveMostProblematicCheckPoints() {
-        return "Backroom light not working has been the most problematic check point for 5 stores.";
+    public List<ProblematicCheckpoint> giveMostProblematicCheckPoints() {
+        return service.giveMostProblematicCheckPoints();
     }
 
     @Tool("Download Report. It generates a csv file report based on the date range provided and returns a download link.")
