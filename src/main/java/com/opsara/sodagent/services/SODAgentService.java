@@ -3,6 +3,7 @@ package com.opsara.sodagent.services;
 
 import com.opsara.sodagent.entities.OrganisationChecklist;
 import com.opsara.sodagent.entities.UserChecklistData;
+import com.opsara.sodagent.entities.WhatsappUser;
 import com.opsara.sodagent.repositories.OrganisationChecklistRepository;
 import com.opsara.sodagent.repositories.UserChecklistDataRepository;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -11,6 +12,9 @@ import org.springframework.transaction.annotation.Transactional;
 
 import java.time.LocalDateTime;
 import java.util.List;
+
+import com.opsara.sodagent.repositories.WhatsappUserRepository;
+import com.opsara.sodagent.entities.WhatsappUser;
 
 
 @Service
@@ -21,6 +25,9 @@ public class SODAgentService {
 
     @Autowired
     private UserChecklistDataRepository userChecklistDataRepository;
+
+    @Autowired
+    private WhatsappUserRepository whatsappUserRepository;
 
     @Transactional
     public OrganisationChecklist saveChecklist(Integer orgId, String checklistJson) {
@@ -102,6 +109,20 @@ public class SODAgentService {
     public void saveChecklist(OrganisationChecklist checklist) {
         checklistRepository.save(checklist);
     }
+
+
+    @Transactional
+    public WhatsappUser saveWhatsappUser(String mobileNumber, String whatsAppUserName) {
+        if (mobileNumber == null || mobileNumber.trim().isEmpty()) {
+            throw new IllegalArgumentException("Mobile number is required");
+        }
+        WhatsappUser user = new WhatsappUser();
+        user.setMobileNumber(mobileNumber);
+        user.setName(whatsAppUserName);
+        user.setCreatedAt(LocalDateTime.now());
+        return whatsappUserRepository.save(user);
+    }
+
 }
 
 

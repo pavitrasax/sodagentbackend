@@ -27,6 +27,28 @@ CREATE TABLE sodagent.user_checklist_data (
                                                   UNIQUE (user_credential, user_credential_type, filled_for_period, organisation_checklist_id)
 );
 
+CREATE TABLE sodagent.stores (
+    id SERIAL PRIMARY KEY,
+    name VARCHAR(255) NOT NULL,
+    store_code VARCHAR(50) ,
+    address TEXT,
+    latitude DECIMAL(10, 7),
+    longitude DECIMAL(10, 7),
+    created_at TIMESTAMP DEFAULT NOW()
+);
+
+CREATE TABLE sodagent.whatsapp_users (
+    id SERIAL PRIMARY KEY,
+    name VARCHAR(255),
+    mobile_number VARCHAR(20) NOT NULL,
+    store_id INTEGER,
+    created_at TIMESTAMP DEFAULT NOW(),
+    CONSTRAINT fk_store
+        FOREIGN KEY (store_id)
+        REFERENCES sodagent.stores(id)
+        ON DELETE CASCADE
+);
+
 
 ALTER TABLE organisation_checklist
     ADD COLUMN status INT DEFAULT 0;

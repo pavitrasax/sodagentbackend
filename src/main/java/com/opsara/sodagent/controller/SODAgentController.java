@@ -122,10 +122,15 @@ public class SODAgentController {
         String organisationId = (String) httpRequest.getAttribute("organisationId");
         String userCredentials = (String) httpRequest.getAttribute("userCredentials");
 
-        return ResponseEntity.ok(new AgentResponse(true, mainExecution(request.getQuery())));
+
+        logger.info("/chat called with : {} {}", organisationId, userCredentials);
+
+        return ResponseEntity.ok(new AgentResponse(true, mainExecution(request.getQuery(), organisationId, userCredentials)));
 
         //return ResponseEntity.status(401).body(new CalculatorResponse(false, "Invalid email or password"));
     }
+
+
 
     @PostMapping("/upload")
     public ResponseEntity<UploadResponse> handleFileUpload(
@@ -296,7 +301,7 @@ public class SODAgentController {
     }
 
 
-    private String mainExecution(String query) {
+    private String mainExecution(String query,  String organisationId, String userCredentials) {
 
         OpenAiChatModel model = OpenAiChatModel.builder()
                 .apiKey(OPENAI_API_KEY)
@@ -304,8 +309,9 @@ public class SODAgentController {
                 // https://docs.langchain4j.dev/integrations/language-models/open-ai#structured-outputs-for-tools
                 .build();
 
-        SODAgentTools tools = new SODAgentTools(sodagentService);
-        tools.setOrgId(String.valueOf(4));
+        logger.info("OrganisationId: " + organisationId);
+        SODAgentTools tools = new SODAgentTools(sodagentService, organisationId);
+
         Assistant assistant = AiServices.builder(Assistant.class)
                 .chatModel(model)
                 .tools(tools)
