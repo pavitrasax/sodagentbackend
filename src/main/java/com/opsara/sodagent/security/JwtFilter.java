@@ -28,6 +28,11 @@ public class JwtFilter extends OncePerRequestFilter {
     protected void doFilterInternal(HttpServletRequest request, HttpServletResponse response, FilterChain chain)
             throws ServletException, IOException {
         String authHeader = request.getHeader("Authorization");
+
+        logger.info("Origin: " + request.getHeader("Origin"));
+        logger.info("Referer: " + request.getHeader("Referer"));
+        logger.info("Request URI: " + request.getRequestURI());
+
         if (authHeader != null && authHeader.startsWith("Bearer ")) {
             String token = authHeader.substring(7);
             if (jwtUtil.validateToken(token)) {

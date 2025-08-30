@@ -25,7 +25,7 @@ public class SecurityConfig {
                 .csrf(csrf -> csrf.disable())
                 .sessionManagement(sm -> sm.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
                 .authorizeHttpRequests(auth -> auth
-                        .requestMatchers("/sodagent/getuniqueURL", "/sodagent/public/fillchecklist").permitAll()
+                        .requestMatchers("/sodagent/getuniqueURL", "/sodagent/public/fillchecklist", "/sodagent/public/gettemplate").permitAll()
                         .requestMatchers("/sodagent/chat", "/sodagent/upload", "/sodagent/initialise").authenticated()
                         .anyRequest().permitAll()
                 ).cors();

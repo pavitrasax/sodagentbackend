@@ -234,7 +234,7 @@ public class SODAgentController {
         boolean isValid = validateAgainstTemplate(dataJson, checklistTemplateJson);
 
         if (!isValid) {
-            return ResponseEntity.badRequest().body("Submitted data does not match checklist template");
+            //return ResponseEntity.badRequest().body("Submitted data does not match checklist template");
         }
 
         sodagentService.saveUserChecklistData(userCredential, userCredentialType, filledForPeriod,
@@ -244,6 +244,9 @@ public class SODAgentController {
 
     private boolean validateAgainstTemplate(String dataJson, String templateJson) {
         try {
+
+            logger.info("validateAgainstTemplate : \n " + templateJson);
+            logger.info("data : \n " + dataJson);
             ObjectMapper mapper = new ObjectMapper();
 
             // Parse template checklist
@@ -342,11 +345,11 @@ public class SODAgentController {
 
 
 
-@GetMapping("/public/gettemplate")
-    public ResponseEntity<String> getTemplate(HttpServletRequest httpRequest) {
+@PostMapping("/public/gettemplate")
+    public ResponseEntity<String> getTemplate(@RequestBody Map<String, Object> body) {
         logger.info("/gettemplate called");
 
-        String hashToken = httpRequest.getParameter("hashtoken");
+    String hashToken = (String) body.get("hashtoken");
 
 
     ObjectMapper mapper = new ObjectMapper();
