@@ -55,6 +55,8 @@ dependencies {
     implementation 'org.hibernate.orm:hibernate-core:6.4.4.Final'
     implementation 'com.vladmihalcea:hibernate-types-60:2.21.1'// for JSON parsing
 
+    implementation 'software.amazon.awssdk:s3:2.25.61'
+    implementation 'software.amazon.awssdk:core:2.25.61'
 }
 
 tasks.named('test') {

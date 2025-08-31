@@ -4,6 +4,10 @@ package com.opsara.sodagent.repositories;
 import org.springframework.data.jpa.repository.JpaRepository;
 import com.opsara.sodagent.entities.UserChecklistData;
 
+import java.time.LocalDateTime;
+import java.util.List;
+
 public interface UserChecklistDataRepository extends JpaRepository<UserChecklistData, Long> {
-    // Add custom query methods if needed
+    List<UserChecklistData> findByOrganisationChecklist_OrgIdAndFilledForPeriodTsBetween(
+            Integer orgId, LocalDateTime from, LocalDateTime to);// Add custom query methods if needed
 }

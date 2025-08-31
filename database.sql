@@ -52,3 +52,6 @@ CREATE TABLE sodagent.whatsapp_users (
 
 ALTER TABLE organisation_checklist
     ADD COLUMN status INT DEFAULT 0;
+
+    ALTER TABLE sodagent.user_checklist_data
+    ADD COLUMN filled_for_period_ts timestamp;

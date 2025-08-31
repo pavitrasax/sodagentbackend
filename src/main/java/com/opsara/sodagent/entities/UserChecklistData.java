@@ -48,6 +48,8 @@ public class UserChecklistData {
     @Column(name = "created_at", nullable = false)
     private LocalDateTime createdAt = LocalDateTime.now();
 
+    @Column(name = "filled_for_period_ts")
+    private LocalDateTime filledForPeriodTs;
     // Getters and setters
     // (Omitted for brevity)
 }

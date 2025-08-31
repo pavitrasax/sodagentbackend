@@ -1,10 +1,12 @@
 package com.opsara.sodagent.tools;
 
 import com.fasterxml.jackson.core.JsonProcessingException;
+import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.opsara.sodagent.controller.SODAgentController;
 import com.opsara.sodagent.dto.ProblematicCheckpoint;
 import com.opsara.sodagent.entities.OrganisationChecklist;
+import com.opsara.sodagent.entities.UserChecklistData;
 import com.opsara.sodagent.services.SODAgentService;
 import dev.langchain4j.agent.tool.Tool;
 import lombok.Data;
@@ -13,11 +15,19 @@ import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 
 import java.io.BufferedReader;
+import java.io.ByteArrayInputStream;
 import java.io.InputStream;
 import java.io.InputStreamReader;
-import java.util.ArrayList;
-import java.util.List;
-import java.util.Map;
+import java.net.URI;
+import java.nio.charset.StandardCharsets;
+import java.time.LocalDateTime;
+import java.time.format.DateTimeFormatter;
+import java.util.*;
+
+import software.amazon.awssdk.core.sync.RequestBody;
+import software.amazon.awssdk.services.s3.S3Client;
+import software.amazon.awssdk.regions.Region;
+import software.amazon.awssdk.services.s3.model.PutObjectRequest;
 
 import static com.opsara.sodagent.constants.Constants.CDN_BASE_URL;
 
@@ -39,42 +49,7 @@ public class SODAgentTools {
 
 
     private static final Logger logger = LoggerFactory.getLogger(SODAgentTools.class);
-    private static final List<String> CHECK_POINTS = List.of(
-            "Have doors been unlocked and the alarm system disabled?",
-            "Have overnight security alerts or messages been reviewed?",
-            "Is the CCTV system functioning and recording?",
-            "Have all floors been swept and mopped?",
-            "Have surfaces, shelves, mannequins, and display units been dusted?",
-            "Are mirrors, glass doors, and fitting room areas clean?",
-            "Have trash bins been emptied and liners replaced?",
-            "Is the air-conditioning or ventilation working and set to a comfortable level?",
-            "Is all store lighting switched on and functioning?",
-            "Is background music playing at the correct volume?",
-            "Are window displays clean, neat, and on theme?",
-            "Are in-store displays set as per the planogram or promotional guidelines?",
-            "Are mannequins dressed and positioned correctly?",
-            "Are shelves and racks fully stocked with no empty gaps?",
-            "Are all garments steamed/ironed and presentable?",
-            "Have overnight deliveries been checked and reconciled with invoices?",
-            "Are new arrivals tagged and priced?",
-            "Are high-margin or new collection items placed in prime locations?",
-            "Are adequate sizes and colors available for fast-moving SKUs?",
-            "Are all POS systems powered on and operational?",
-            "Is the sales software logged in and connected?",
-            "Has the opening cash float been counted and prepared?",
-            "Are receipt printers, barcode scanners, and payment terminals working?",
-            "Has the team briefing been conducted for daily sales targets and promotions?",
-            "Have staff roles and floor coverage been assigned?",
-            "Have important updates from head office been shared?",
-            "Are fire exits checked and clear?",
-            "Are fire extinguishers accessible?",
-            "Have fitting room emergency buttons been tested?",
-            "Are there no tripping hazards on the shop floor?",
-            "Is welcome signage and promotional material placed and visible?",
-            "Are fitting rooms stocked with hangers, hooks, and clean seating?",
-            "Are shopping bags, tissue paper, and gift wraps ready?",
-            "Is hand sanitizer available at entrance and cash counter?"
-    );
+    private static final List<String> CHECK_POINTS = List.of("Have doors been unlocked and the alarm system disabled?", "Have overnight security alerts or messages been reviewed?", "Is the CCTV system functioning and recording?", "Have all floors been swept and mopped?", "Have surfaces, shelves, mannequins, and display units been dusted?", "Are mirrors, glass doors, and fitting room areas clean?", "Have trash bins been emptied and liners replaced?", "Is the air-conditioning or ventilation working and set to a comfortable level?", "Is all store lighting switched on and functioning?", "Is background music playing at the correct volume?", "Are window displays clean, neat, and on theme?", "Are in-store displays set as per the planogram or promotional guidelines?", "Are mannequins dressed and positioned correctly?", "Are shelves and racks fully stocked with no empty gaps?", "Are all garments steamed/ironed and presentable?", "Have overnight deliveries been checked and reconciled with invoices?", "Are new arrivals tagged and priced?", "Are high-margin or new collection items placed in prime locations?", "Are adequate sizes and colors available for fast-moving SKUs?", "Are all POS systems powered on and operational?", "Is the sales software logged in and connected?", "Has the opening cash float been counted and prepared?", "Are receipt printers, barcode scanners, and payment terminals working?", "Has the team briefing been conducted for daily sales targets and promotions?", "Have staff roles and floor coverage been assigned?", "Have important updates from head office been shared?", "Are fire exits checked and clear?", "Are fire extinguishers accessible?", "Have fitting room emergency buttons been tested?", "Are there no tripping hazards on the shop floor?", "Is welcome signage and promotional material placed and visible?", "Are fitting rooms stocked with hangers, hooks, and clean seating?", "Are shopping bags, tissue paper, and gift wraps ready?", "Is hand sanitizer available at entrance and cash counter?");
 
     @Tool("Initialise SOD Agent with a list of sample check points to track daily.")
     public String init() {
@@ -258,13 +233,83 @@ public class SODAgentTools {
     }
 
     @Tool("Download Report. It generates a csv file report based on the date range provided and returns a download link.")
-    public String downloadReport(String fromDate, String toDate) {
-        // Logic to generate and download report based on date range
-        // This is a placeholder implementation
-        String message = "Report generated from " + fromDate + " to " + toDate + " for all stores. Please download here.";
-        String completeUrl = CDN_BASE_URL + "sodreport.csv";
-        String downLoadLink = "<a href=\"" + completeUrl + "\" target=\"_blank\">sodreport.csv</a>";
-        return message + downLoadLink;
+    public String downloadReport(LocalDateTime fromDateTime, LocalDateTime toDateTime) {
+        logger.info("Download Report Called with fromDateTime: " + fromDateTime + " toDateTime: " + toDateTime);
+
+        // Fetch data
+        List<UserChecklistData> checklistDataList = service.getUserChecklistDataBetweenDatesAndOrg(Integer.valueOf(organisationId), fromDateTime, toDateTime);
+
+        ObjectMapper objectMapper = new ObjectMapper();
+
+// 1. Collect all unique questions
+        Set<String> allQuestions = new LinkedHashSet<>();
+        List<Map<String, String>> answersList = new ArrayList<>();
+
+        for (UserChecklistData data : checklistDataList) {
+            Map<String, String> answers = new LinkedHashMap<>();
+            try {
+                Map<String, Object> root = objectMapper.readValue(data.getDataJson(), new TypeReference<Map<String, Object>>() {});
+                List<Map<String, Object>> responses = (List<Map<String, Object>>) root.get("checklist_responses");
+                if (responses != null) {
+                    for (Map<String, Object> resp : responses) {
+                        String question = (String) resp.get("question");
+                        String answer = (String) resp.get("answer");
+                        answers.put(question, answer);
+                    }
+                }
+            } catch (Exception e) {
+                throw new RuntimeException(e);
+            }
+            allQuestions.addAll(answers.keySet());
+            answersList.add(answers);
+        }
+
+// 2. Write CSV header
+        List<String> header = new ArrayList<>();
+        header.add("userCredential");
+        header.add("filledForPeriod");
+        header.addAll(allQuestions);
+
+        StringBuilder csv = new StringBuilder();
+        csv.append(String.join(",", header)).append("\n");
+
+// 3. Write each row
+        for (int i = 0; i < checklistDataList.size(); i++) {
+            UserChecklistData data = checklistDataList.get(i);
+            Map<String, String> answers = answersList.get(i);
+            List<String> row = new ArrayList<>();
+            row.add(data.getUserCredential());
+            row.add(data.getFilledForPeriod());
+            for (String question : allQuestions) {
+                row.add(answers.getOrDefault(question, ""));
+            }
+            csv.append(String.join(",", row)).append("\n");
+        }
+
+        String csvContent = csv.toString();
+
+        // Upload to S3 (pseudo code, replace with your S3 client)
+        String fileName = "UserChecklistReport_" + fromDateTime + "_to_" + fromDateTime + ".csv";
+        InputStream csvStream = new ByteArrayInputStream(csvContent.getBytes(StandardCharsets.UTF_8));
+        S3Client s3Client = S3Client.builder().region(Region.of("us-east-1")).endpointOverride(URI.create("https://s3.us-east-1.amazonaws.com")).build();
+
+        String bucketName = "opsara-sod";
+        String key = fileName;
+
+        PutObjectRequest putObjectRequest = PutObjectRequest.builder().bucket(bucketName).key(key).contentType("text/csv").build();
+
+        try {
+            s3Client.putObject(putObjectRequest, RequestBody.fromInputStream(csvStream, csvContent.getBytes(StandardCharsets.UTF_8).length));
+        } catch (Exception e) {
+            logger.error("Error uploading report to S3", e);
+        }
+
+
+        // Construct the S3 URL (public access or presigned URL as per your setup)
+        String s3Url = "https://" + bucketName + ".s3.amazonaws.com/" + key;
+
+
+        return "Download your report here: " + s3Url;
     }
 
     @Tool("Skip Edit Checklist. Skips the edit checklist reminder and starts for next stage which is rollout.")

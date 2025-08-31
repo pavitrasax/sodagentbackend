@@ -13,10 +13,10 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.time.LocalDateTime;
+import java.time.format.DateTimeFormatter;
 import java.util.List;
 
 import com.opsara.sodagent.repositories.WhatsappUserRepository;
-import com.opsara.sodagent.entities.WhatsappUser;
 
 
 @Service
@@ -97,7 +97,7 @@ public class SODAgentService {
         userChecklistData.setOrganisationChecklist(organisationChecklist);
         userChecklistData.setDataJson(dataJson);
         userChecklistData.setCreatedAt(LocalDateTime.now());
-
+        userChecklistData.setFilledForPeriodTs(LocalDateTime.parse(filledForPeriod, DateTimeFormatter.ofPattern("ddMMyyyy-HH:mm")));
         return userChecklistDataRepository.save(userChecklistData);
     }
 
@@ -155,6 +155,13 @@ public class SODAgentService {
                         rs.getInt("no_count")
                 )
         );
+    }
+
+
+    public List<UserChecklistData> getUserChecklistDataBetweenDatesAndOrg(
+            Integer organisationId, LocalDateTime fromDate, LocalDateTime toDate) {
+        return userChecklistDataRepository.findByOrganisationChecklist_OrgIdAndFilledForPeriodTsBetween(
+                organisationId, fromDate, toDate);
     }
 
 }
