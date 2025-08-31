@@ -131,7 +131,7 @@ public class SODAgentTools {
 
 
     @Tool("Download a default SOD checklist file containing all the check points.")
-    public String download() {
+    public String downloadDefaultChecklist() {
         logger.info("Download Called.");
         String fileName = "SODChecks.txt";
         String completeUrl = CDN_BASE_URL + fileName;
@@ -174,7 +174,7 @@ public class SODAgentTools {
             service.saveChecklist(checklist);
         }
 
-        mobileNumbers.forEach(mobile -> service.saveWhatsappUser(mobile, null));
+        mobileNumbers.forEach(mobile -> service.saveWhatsappUser(mobile, null, Integer.valueOf(organisationId)));
 
 
         return "We have stored the mobile numbers and would send them whatsapp messages to fill in checklist";
@@ -196,7 +196,7 @@ public class SODAgentTools {
             service.saveChecklist(checklist);
         }
 
-        mobileNameMaps.forEach((mobile, name) -> service.saveWhatsappUser(mobile, name));
+        mobileNameMaps.forEach((mobile, name) -> service.saveWhatsappUser(mobile, name, Integer.valueOf(organisationId)));
 
         return "We have stored the mobile numbers and user names and would send them whatsapp messages to fill in checklist";
     }
@@ -204,7 +204,27 @@ public class SODAgentTools {
 
     @Tool("Returns Completion Status. It tells how many stores out of how many have completed the checklist.")
     public String returnCompletionStatus() {
-        return "3 out of 19 stores have not yet completed the checklist. Let me know if you want to send a reminder to them.";
+
+        List<String> allUserCredentials = service.getAllWhatsappUserCredentialsByOrgId(Integer.valueOf(organisationId));
+        int totalUsers = allUserCredentials.size();
+
+        String today = LocalDateTime.now().format(DateTimeFormatter.ofPattern("ddMMyyyy"));
+        List<String> filledUserCredentials = service.getUserChecklistDataFilledForPeriodAndOrg(today, Integer.valueOf(organisationId));
+
+        Set<String> filledSet = new HashSet<>(filledUserCredentials);
+        List<String> notFilled = new ArrayList<>();
+        for (String user : allUserCredentials) {
+            if (!filledSet.contains(user)) {
+                notFilled.add(user);
+            }
+        }
+
+        int notFilledCount = notFilled.size();
+        String notFilledList = String.join(", ", notFilled);
+
+        return notFilledCount + " out of " + totalUsers + " stores have not yet completed the checklist. "
+                + (notFilledCount > 0 ? "Pending: " + notFilledList + ". " : "")
+                + "Let me know if you want to send a reminder to them.";
     }
 
     @Tool("Reminder for completion. It sends a reminder to stores that have not completed the checklist.")

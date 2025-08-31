@@ -19,6 +19,9 @@ public class WhatsappUser {
     @Column(name = "mobile_number", nullable = false)
     private String mobileNumber;
 
+    @Column(name = "organisation_id", nullable = false)
+    private Integer orgId;
+
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "store_id")
     private Store store;

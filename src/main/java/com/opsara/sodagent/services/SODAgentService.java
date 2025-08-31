@@ -12,6 +12,7 @@ import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
 import java.util.List;
@@ -117,13 +118,14 @@ public class SODAgentService {
 
 
     @Transactional
-    public WhatsappUser saveWhatsappUser(String mobileNumber, String whatsAppUserName) {
+    public WhatsappUser saveWhatsappUser(String mobileNumber, String whatsAppUserName, Integer orgId) {
         if (mobileNumber == null || mobileNumber.trim().isEmpty()) {
             throw new IllegalArgumentException("Mobile number is required");
         }
         WhatsappUser user = new WhatsappUser();
         user.setMobileNumber(mobileNumber);
         user.setName(whatsAppUserName);
+        user.setOrgId(orgId);
         user.setCreatedAt(LocalDateTime.now());
         return whatsappUserRepository.save(user);
     }
@@ -164,6 +166,26 @@ public class SODAgentService {
                 organisationId, fromDate, toDate);
     }
 
+    public List<String> getAllWhatsappUserCredentialsByOrgId(Integer organisationId) {
+        List<WhatsappUser> users = whatsappUserRepository.findByOrgId(organisationId);
+        return users.stream()
+                .map(WhatsappUser::getMobileNumber)
+                .toList();
+
+   }
+
+    public List<String> getUserChecklistDataFilledForPeriodAndOrg(String today, Integer orgId) {
+        DateTimeFormatter formatter = DateTimeFormatter.ofPattern("ddMMyyyy");
+        LocalDateTime startOfDay = LocalDate.parse(today, formatter).atStartOfDay();
+        LocalDateTime endOfDay = startOfDay.plusDays(1);
+
+        List<UserChecklistData> dataList = userChecklistDataRepository
+                .findByOrganisationChecklist_OrgIdAndFilledForPeriodTsBetween(orgId, startOfDay, endOfDay);
+
+        return dataList.stream()
+                .map(UserChecklistData::getUserCredential)
+                .toList();
+    }
 }
 
 

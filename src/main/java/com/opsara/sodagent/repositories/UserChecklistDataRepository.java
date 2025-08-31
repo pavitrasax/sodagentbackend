@@ -9,5 +9,8 @@ import java.util.List;
 
 public interface UserChecklistDataRepository extends JpaRepository<UserChecklistData, Long> {
     List<UserChecklistData> findByOrganisationChecklist_OrgIdAndFilledForPeriodTsBetween(
-            Integer orgId, LocalDateTime from, LocalDateTime to);// Add custom query methods if needed
+            Integer orgId,
+            LocalDateTime start,
+            LocalDateTime end
+    );
 }

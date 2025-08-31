@@ -49,6 +49,9 @@ CREATE TABLE sodagent.whatsapp_users (
         ON DELETE CASCADE
 );
 
+ALTER TABLE sodagent.whatsapp_users
+ADD COLUMN organisation_id INTEGER;
+
 
 ALTER TABLE organisation_checklist
     ADD COLUMN status INT DEFAULT 0;
