@@ -8,9 +8,12 @@ import com.opsara.sodagent.entities.WhatsappUser;
 import com.opsara.sodagent.repositories.OrganisationChecklistRepository;
 import com.opsara.sodagent.repositories.UserChecklistDataRepository;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.data.domain.PageRequest;
 import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+
+import org.springframework.data.domain.Pageable;
 
 import java.time.LocalDate;
 import java.time.LocalDateTime;
@@ -186,6 +189,15 @@ public class SODAgentService {
                 .map(UserChecklistData::getUserCredential)
                 .toList();
     }
+
+
+
+    public List<Object[]> getTopActiveUsersString(Integer orgId, int topN) {
+        LocalDateTime fromDate = LocalDateTime.now().minusMonths(1);
+        Pageable topCount = (Pageable) PageRequest.of(0, topN);
+        List<Object[]> results = userChecklistDataRepository.findTopActiveUsersByOrgIdAndLastMonth(orgId, fromDate, topCount);
+        return  results;  }
+
 }
 
 

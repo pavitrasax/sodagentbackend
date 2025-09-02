@@ -229,21 +229,42 @@ public class SODAgentTools {
 
     @Tool("Reminder for completion. It sends a reminder to stores that have not completed the checklist.")
     public String sendCompletionReminder() {
+
+
+        List<String> allUserCredentials = service.getAllWhatsappUserCredentialsByOrgId(Integer.valueOf(organisationId));
+        int totalUsers = allUserCredentials.size();
+
+        String today = LocalDateTime.now().format(DateTimeFormatter.ofPattern("ddMMyyyy"));
+        List<String> filledUserCredentials = service.getUserChecklistDataFilledForPeriodAndOrg(today, Integer.valueOf(organisationId));
+
+        Set<String> filledSet = new HashSet<>(filledUserCredentials);
+        List<String> notFilled = new ArrayList<>();
+        for (String user : allUserCredentials) {
+            if (!filledSet.contains(user)) {
+                notFilled.add(user);
+            }
+        }
+
+        // send whatsapp message to notFilled users
         return "Reminder sent to stores that have not completed the checklist. They will receive a WhatsApp message shortly.";
     }
 
-    @Tool("Returns Leaderboard from top. It returns the list of top stores based on score they got as per checklist. Parameter numberofStoresToReturn represents how many stores from top would be returned")
+    @Tool("Returns Leaderboard based on descipline of filling checklist from top. It returns the list of top {numberofStoresToReturn} users who are regular in filling.")
     public String giveLeaderBoardfFomTop(int numberofStoresToReturn) {
-        String returnString = "Saket, Koramangala and Indiranagar are the top 3 stores based on the checklist score. <img src='" + CDN_BASE_URL + "leaderboard.png' alt='Leaderboard Image' />";
-        logger.info(returnString);
-        return returnString;
+        String returnString = "";
+        List<Object[]> results = service.getTopActiveUsersString(Integer.valueOf(organisationId), numberofStoresToReturn);
+
+        StringBuilder sb = new StringBuilder("Top " + numberofStoresToReturn + " users in terms of descipline to fill over last month:\n");
+        for (Object[] row : results) {
+            sb.append(row[0]).append(": ").append(row[1]).append(" entries\n");
+        }
+        return sb.toString();
     }
 
     @Tool("Returns Detailed Report for a store. It returns the detailed report for a store with name storeName.")
     public String giveOneDetailedReport(String storeName) {
         String message = "Detailed report for " + storeName + ":\n";
-        String completeUrl = CDN_BASE_URL + "Koramangala_LatestReport.pdf";
-        String downLoadLink = "<a href=\"" + completeUrl + "\" target=\"_blank\">Koramangala_LatestReport.pdf</a>";
+        String downLoadLink = "<a href=\"store360?storename=" + storeName + "\" target=\"_blank\">storeName 360</a>";
         return message + downLoadLink;
     }
 
