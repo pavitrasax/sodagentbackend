@@ -12,8 +12,11 @@ import java.util.Optional;
 
 public interface OrganisationChecklistRepository extends JpaRepository<OrganisationChecklist, Long> {
     List<OrganisationChecklist> findByOrgId(Integer orgId);
+
     List<OrganisationChecklist> findByOrgIdAndIsActiveTrue(Integer orgId);
+
     List<OrganisationChecklist> findByOrgIdAndIsActiveOrderByCreatedAtDesc(Integer orgId, boolean isActive);
+
     boolean existsByOrgId(Integer orgId);
 
     @Modifying

@@ -3,7 +3,6 @@ package com.opsara.sodagent.tools;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.ObjectMapper;
-import com.opsara.sodagent.controller.SODAgentController;
 import com.opsara.sodagent.dto.ProblematicCheckpoint;
 import com.opsara.sodagent.entities.OrganisationChecklist;
 import com.opsara.sodagent.entities.UserChecklistData;
@@ -13,12 +12,9 @@ import dev.langchain4j.agent.tool.Tool;
 import lombok.Data;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import org.springframework.beans.factory.annotation.Autowired;
 
-import java.io.BufferedReader;
 import java.io.ByteArrayInputStream;
 import java.io.InputStream;
-import java.io.InputStreamReader;
 import java.net.URI;
 import java.nio.charset.StandardCharsets;
 import java.time.LocalDateTime;
@@ -38,6 +34,8 @@ public class SODAgentTools {
 
     private SODAgentService service;
     private String organisationId;
+    private static final Logger logger = LoggerFactory.getLogger(SODAgentTools.class);
+    private static final List<String> CHECK_POINTS = List.of("Have doors been unlocked and the alarm system disabled?", "Have overnight security alerts or messages been reviewed?", "Is the CCTV system functioning and recording?", "Have all floors been swept and mopped?", "Have surfaces, shelves, mannequins, and display units been dusted?", "Are mirrors, glass doors, and fitting room areas clean?", "Have trash bins been emptied and liners replaced?", "Is the air-conditioning or ventilation working and set to a comfortable level?", "Is all store lighting switched on and functioning?", "Is background music playing at the correct volume?", "Are window displays clean, neat, and on theme?", "Are in-store displays set as per the planogram or promotional guidelines?", "Are mannequins dressed and positioned correctly?", "Are shelves and racks fully stocked with no empty gaps?", "Are all garments steamed/ironed and presentable?", "Have overnight deliveries been checked and reconciled with invoices?", "Are new arrivals tagged and priced?", "Are high-margin or new collection items placed in prime locations?", "Are adequate sizes and colors available for fast-moving SKUs?", "Are all POS systems powered on and operational?", "Is the sales software logged in and connected?", "Has the opening cash float been counted and prepared?", "Are receipt printers, barcode scanners, and payment terminals working?", "Has the team briefing been conducted for daily sales targets and promotions?", "Have staff roles and floor coverage been assigned?", "Have important updates from head office been shared?", "Are fire exits checked and clear?", "Are fire extinguishers accessible?", "Have fitting room emergency buttons been tested?", "Are there no tripping hazards on the shop floor?", "Is welcome signage and promotional material placed and visible?", "Are fitting rooms stocked with hangers, hooks, and clean seating?", "Are shopping bags, tissue paper, and gift wraps ready?", "Is hand sanitizer available at entrance and cash counter?");
 
     public SODAgentTools(SODAgentService service) {
         this.service = service;
@@ -49,8 +47,6 @@ public class SODAgentTools {
     }
 
 
-    private static final Logger logger = LoggerFactory.getLogger(SODAgentTools.class);
-    private static final List<String> CHECK_POINTS = List.of("Have doors been unlocked and the alarm system disabled?", "Have overnight security alerts or messages been reviewed?", "Is the CCTV system functioning and recording?", "Have all floors been swept and mopped?", "Have surfaces, shelves, mannequins, and display units been dusted?", "Are mirrors, glass doors, and fitting room areas clean?", "Have trash bins been emptied and liners replaced?", "Is the air-conditioning or ventilation working and set to a comfortable level?", "Is all store lighting switched on and functioning?", "Is background music playing at the correct volume?", "Are window displays clean, neat, and on theme?", "Are in-store displays set as per the planogram or promotional guidelines?", "Are mannequins dressed and positioned correctly?", "Are shelves and racks fully stocked with no empty gaps?", "Are all garments steamed/ironed and presentable?", "Have overnight deliveries been checked and reconciled with invoices?", "Are new arrivals tagged and priced?", "Are high-margin or new collection items placed in prime locations?", "Are adequate sizes and colors available for fast-moving SKUs?", "Are all POS systems powered on and operational?", "Is the sales software logged in and connected?", "Has the opening cash float been counted and prepared?", "Are receipt printers, barcode scanners, and payment terminals working?", "Has the team briefing been conducted for daily sales targets and promotions?", "Have staff roles and floor coverage been assigned?", "Have important updates from head office been shared?", "Are fire exits checked and clear?", "Are fire extinguishers accessible?", "Have fitting room emergency buttons been tested?", "Are there no tripping hazards on the shop floor?", "Is welcome signage and promotional material placed and visible?", "Are fitting rooms stocked with hangers, hooks, and clean seating?", "Are shopping bags, tissue paper, and gift wraps ready?", "Is hand sanitizer available at entrance and cash counter?");
 
     @Tool("Initialise SOD Agent with a list of sample check points to track daily.")
     public String init() {
@@ -63,7 +59,6 @@ public class SODAgentTools {
         // Represent as JSON: { "checklist": [ ... ] }
         ObjectMapper mapper = new ObjectMapper();
         Map<String, Object> jsonMap = Map.of("checklist", checklist);
-        logger.info("Init called .... 2");
         String checkListJson = "{}";
         try {
             checkListJson = mapper.writerWithDefaultPrettyPrinter().writeValueAsString(jsonMap);
@@ -140,8 +135,9 @@ public class SODAgentTools {
                     logger.info("case default called  ....");
                     responseString += new String("Hello. See sample prompts to query insights in tray on left hand side. \n");
             }
-            // Use existingChecklist.getStatus() or other fields as needed
+
         }
+
         logger.info("Response String: " + responseString);
 
         return responseString;
@@ -348,7 +344,7 @@ public class SODAgentTools {
 
         ObjectMapper objectMapper = new ObjectMapper();
 
-// 1. Collect all unique questions
+        // 1. Collect all unique questions
         Set<String> allQuestions = new LinkedHashSet<>();
         List<Map<String, String>> answersList = new ArrayList<>();
 
@@ -372,7 +368,7 @@ public class SODAgentTools {
             answersList.add(answers);
         }
 
-// 2. Write CSV header
+        // 2. Write CSV header
         List<String> header = new ArrayList<>();
         header.add("userCredential");
         header.add("filledForPeriod");
@@ -381,7 +377,7 @@ public class SODAgentTools {
         StringBuilder csv = new StringBuilder();
         csv.append(String.join(",", header)).append("\n");
 
-// 3. Write each row
+        // 3. Write each row
         for (int i = 0; i < checklistDataList.size(); i++) {
             UserChecklistData data = checklistDataList.get(i);
             Map<String, String> answers = answersList.get(i);
@@ -414,6 +410,7 @@ public class SODAgentTools {
 
 
         // Construct the S3 URL (public access or presigned URL as per your setup)
+        // TODO - Generate presigned URL with expiry
         String s3Url = "https://" + bucketName + ".s3.amazonaws.com/" + key;
 
 

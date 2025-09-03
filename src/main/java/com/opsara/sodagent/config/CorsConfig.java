@@ -1,4 +1,5 @@
 package com.opsara.sodagent.config;
+
 import org.springframework.context.annotation.Configuration;
 import org.springframework.web.servlet.config.annotation.CorsRegistry;
 import org.springframework.web.servlet.config.annotation.WebMvcConfigurer;
@@ -7,7 +8,10 @@ import org.springframework.context.annotation.Bean;
 import org.springframework.web.cors.CorsConfiguration;
 import org.springframework.web.cors.CorsConfigurationSource;
 import org.springframework.web.cors.UrlBasedCorsConfigurationSource;
+
 import java.util.List;
+
+import static com.opsara.sodagent.constants.Constants.ALLOWED_ORIGINS;
 
 @Configuration
 public class CorsConfig implements WebMvcConfigurer {
@@ -15,18 +19,7 @@ public class CorsConfig implements WebMvcConfigurer {
     @Override
     public void addCorsMappings(CorsRegistry registry) {
         registry.addMapping("/**") // Apply CORS to all paths
-                .allowedOriginPatterns(
-                        "http://localhost:3001",
-                        "https://opsara.io",
-                        "https://www.opsara.io",
-                        "https://*.replit.app",
-                        "https://replit.app",
-                        "https://*.replit.dev",
-                        "https://replit.dev",
-                        "http://localhost:3000",
-                        "https://d83104de-8dc1-4e95-ad1a-f2d62d63f7d6-00-1tq1p0cz1y1el.janeway.replit.dev"
-
-                ) // Allow requests from this origin
+                .allowedOriginPatterns(ALLOWED_ORIGINS) // Allow requests from this origin
                 .allowedMethods("*") // Allow all HTTP methods (GET, POST, PUT, DELETE, etc.)
                 .allowedHeaders("*") // Allow all headers
                 .allowCredentials(true) // Allow sending of credentials (cookies, HTTP authentication)
@@ -36,7 +29,7 @@ public class CorsConfig implements WebMvcConfigurer {
     @Bean
     public CorsConfigurationSource corsConfigurationSource() {
         CorsConfiguration configuration = new CorsConfiguration();
-        configuration.setAllowedOriginPatterns(List.of("https://*.replit.dev", "https://*.replit.app", "https://opsara.io", "https://d83104de-8dc1-4e95-ad1a-f2d62d63f7d6-00-1tq1p0cz1y1el.janeway.replit.dev"));
+        configuration.setAllowedOriginPatterns(List.of(ALLOWED_ORIGINS));
         configuration.setAllowedMethods(List.of("GET", "POST", "PUT", "DELETE", "OPTIONS"));
         configuration.setAllowedHeaders(List.of("*"));
         configuration.setAllowCredentials(true);

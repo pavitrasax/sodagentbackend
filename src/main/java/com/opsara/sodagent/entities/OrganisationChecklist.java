@@ -4,6 +4,7 @@ import jakarta.persistence.*;
 import lombok.Data;
 
 import java.time.LocalDateTime;
+
 import org.hibernate.annotations.Type;
 
 import com.vladmihalcea.hibernate.type.json.JsonBinaryType;
