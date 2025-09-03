@@ -131,6 +131,25 @@ public class SODAgentController {
     }
 
 
+    @PostMapping("/downloadchecklist")
+    public ResponseEntity<AgentResponse> downloadchecklist(@RequestBody AgentRequest request, HttpServletRequest httpRequest) {
+        logger.info("/download checklist called ");
+
+        // Validate claims. Get organisatin. Get Purchaed Agent. Find SOD. Not found throw UnAuthorised
+
+        String organisationId = (String) httpRequest.getAttribute("organisationId");
+        String userCredentials = (String) httpRequest.getAttribute("userCredentials");
+
+
+        logger.info("/download checklist called with : {} {}", organisationId, userCredentials);
+
+
+
+        return ResponseEntity.ok(new AgentResponse(true, mainExecution(request.getQuery(), organisationId, userCredentials)));
+
+        //return ResponseEntity.status(401).body(new CalculatorResponse(false, "Invalid email or password"));
+    }
+
 
     @PostMapping("/upload")
     public ResponseEntity<UploadResponse> handleFileUpload(

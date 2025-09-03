@@ -8,6 +8,7 @@ import com.opsara.sodagent.dto.ProblematicCheckpoint;
 import com.opsara.sodagent.entities.OrganisationChecklist;
 import com.opsara.sodagent.entities.UserChecklistData;
 import com.opsara.sodagent.services.SODAgentService;
+import com.opsara.sodagent.util.URLGenerationUtil;
 import dev.langchain4j.agent.tool.Tool;
 import lombok.Data;
 import org.slf4j.Logger;
@@ -78,25 +79,42 @@ public class SODAgentTools {
         if (existingChecklist == null) {
             service.saveChecklist(orgId, checkListJson);
             logger.info("service.saveChecklist called  ....");
+            String downloadChecklistURL = downloadDefaultChecklist();
+            String hashtoken = null;
+            try {
+                hashtoken = URLGenerationUtil.generateHash("preview@opsara.io", "email", "01092025-00:00", organisationId);
+
+            } catch (Exception e) {
+                throw new RuntimeException(e);
+            }
             responseString += new String("SOD Agent is successfully initialised for your organisation. A default template is copied. \n");
             responseString += "You can see how the form would look to your store managers here: \n";
-            responseString += "https://sod-frontend.opsara.com/fillchecklist/?userCredential=userCredentials&userCredentialType=email&forPeriod=2023-Q3 \n";
+            responseString += "fillsodchecklist?hashtoken=" + hashtoken + " \n";
             responseString += "If you want to change it, you can download the checklist from here, edit it and upload back the modified checklist. \n";
-            responseString += "https://sod-frontend.opsara.com/downloadchecklist \n";
+            responseString += downloadChecklistURL;
             responseString += "Or you may directly want to roll out to your store managers. \n";
-            responseString += "For rolling out use the promt like Roll out to Name at mobile/email. \n";
+            responseString += "For rolling out use the promt like Roll out to Name at mobile\n";
         } else {
             int status = existingChecklist.getStatus() != null ? existingChecklist.getStatus() : 0;
             switch (status) {
                 case 0:
                     logger.info("case 0 called  ....");
+                    String downloadChecklistURL = downloadDefaultChecklist();
+                    String hashtoken = null;
+                    try {
+                        hashtoken = URLGenerationUtil.generateHash("preview@opsara.io", "email", "01092025-00:00", organisationId);
+                        logger.info("Hash Token generated with in INIT as " + hashtoken);
+
+                    } catch (Exception e) {
+                        throw new RuntimeException(e);
+                    }
                     responseString += new String("SOD Agent is successfully initialised for your organisation. A default template is copied. \n");
                     responseString += "You can see how the form would look to your store managers here: \n";
-                    responseString += "https://sod-frontend.opsara.com/fillchecklist/?userCredential=userCredentials&userCredentialType=email&forPeriod=2023-Q3 \n";
+                    responseString += "fillsodchecklist?hashtoken=" + hashtoken + " \n";
                     responseString += "If you want to change it, you can download the checklist from here, edit it and upload back the modified checklist. \n";
-                    responseString += "https://sod-frontend.opsara.com/downloadchecklist \n";
+                    responseString += downloadChecklistURL;
                     responseString += "Or you may directly want to roll out to your store managers. \n";
-                    responseString += "For rolling out use the promt like Roll out to Name at mobile/email. \n";
+                    responseString += "For rolling out use the prompt like Roll out to Name at mobile\n";
                     break;
                 case 1:
                     logger.info("case 1 called  ....");
@@ -133,10 +151,58 @@ public class SODAgentTools {
     @Tool("Download a default SOD checklist file containing all the check points.")
     public String downloadDefaultChecklist() {
         logger.info("Download Called.");
-        String fileName = "SODChecks.txt";
-        String completeUrl = CDN_BASE_URL + fileName;
-        String downLoadLink = "<a href=\"" + completeUrl + "\" target=\"_blank\">Download SODChecks.txt</a>";
-        return downLoadLink;
+
+        OrganisationChecklist existingChecklist = service.fetchLatestActiveChecklist(Integer.valueOf(organisationId));
+        if (existingChecklist != null && existingChecklist.getChecklistJson() != null) {
+            // Parse checklist_json to extract questions
+            ObjectMapper mapper = new ObjectMapper();
+            List<String> questions = new ArrayList<>();
+            try {
+                Map<String, Object> checklistMap = mapper.readValue(existingChecklist.getChecklistJson(), new TypeReference<Map<String, Object>>() {
+                });
+                questions = (List<String>) checklistMap.getOrDefault("checklist", Collections.emptyList());
+            } catch (Exception e) {
+                logger.error("Error parsing checklist_json", e);
+                // fallback to hardcoded file
+                String fileName = "SODChecks.txt";
+                String completeUrl = CDN_BASE_URL + fileName;
+                String downLoadLink = "<a href=\"" + completeUrl + "\" target=\"_blank\">Download SODChecks.txt</a>";
+                return downLoadLink;
+            }
+
+            // Generate CSV content
+            StringBuilder csv = new StringBuilder();
+            for (String q : questions) {
+                csv.append(q.replaceAll(",", " ")).append("\n");
+            }
+            String csvContent = csv.toString();
+
+            // Upload to S3
+            String fileName = "Checklist_" + organisationId + ".csv";
+            InputStream csvStream = new ByteArrayInputStream(csvContent.getBytes(StandardCharsets.UTF_8));
+            S3Client s3Client = S3Client.builder().region(Region.of("us-east-1")).endpointOverride(URI.create("https://s3.us-east-1.amazonaws.com")).build();
+            String bucketName = "opsara-sod";
+            String key = fileName;
+            PutObjectRequest putObjectRequest = PutObjectRequest.builder().bucket(bucketName).key(key).contentType("text/csv").build();
+            try {
+                s3Client.putObject(putObjectRequest, RequestBody.fromInputStream(csvStream, csvContent.getBytes(StandardCharsets.UTF_8).length));
+            } catch (Exception e) {
+                logger.error("Error uploading checklist CSV to S3", e);
+                // fallback to hardcoded file
+                String fallbackFileName = "SODChecks.txt";
+                String fallbackUrl = CDN_BASE_URL + fallbackFileName;
+                String fallbackLink = "<a href=\"" + fallbackUrl + "\" target=\"_blank\">Download SODChecks.txt</a>";
+                return fallbackLink;
+            }
+            String s3Url = "https://" + bucketName + ".s3.amazonaws.com/" + key;
+            return "<a href=\"" + s3Url + "\" target=\"_blank\">Download Checklist CSV</a>";
+        } else {
+            // fallback to hardcoded file
+            String fileName = "SODChecks.txt";
+            String completeUrl = CDN_BASE_URL + fileName;
+            String downLoadLink = "<a href=\"" + completeUrl + "\" target=\"_blank\">Download SODChecks.txt</a>";
+            return downLoadLink;
+        }
     }
 
     @Tool("Parses CSV and extracts mobile numbers to return a List of Strings containing mobile numbers.")
@@ -289,7 +355,8 @@ public class SODAgentTools {
         for (UserChecklistData data : checklistDataList) {
             Map<String, String> answers = new LinkedHashMap<>();
             try {
-                Map<String, Object> root = objectMapper.readValue(data.getDataJson(), new TypeReference<Map<String, Object>>() {});
+                Map<String, Object> root = objectMapper.readValue(data.getDataJson(), new TypeReference<Map<String, Object>>() {
+                });
                 List<Map<String, Object>> responses = (List<Map<String, Object>>) root.get("checklist_responses");
                 if (responses != null) {
                     for (Map<String, Object> resp : responses) {
