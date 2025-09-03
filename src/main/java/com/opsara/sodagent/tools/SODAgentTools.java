@@ -93,7 +93,7 @@ public class SODAgentTools {
             responseString += "If you want to change it, you can download the checklist from here, edit it and upload back the modified checklist. \n";
             responseString += downloadChecklistURL;
             responseString += "Or you may directly want to roll out to your store managers. \n";
-            responseString += "For rolling out use the promt like Roll out to Name at mobile\n";
+            responseString += "For rolling out use the prompt like Roll out to Name at mobile\n";
         } else {
             int status = existingChecklist.getStatus() != null ? existingChecklist.getStatus() : 0;
             switch (status) {
