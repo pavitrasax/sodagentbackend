@@ -116,7 +116,8 @@ public class SODAgentController {
             }
         }
 
-        return ResponseEntity.ok(responseString);
+        return ResponseEntity.ok(new AgentResponse(true, responseString));
+
     }
 
 
