@@ -82,11 +82,13 @@ public class SODAgentTools {
             } catch (Exception e) {
                 throw new RuntimeException(e);
             }
-            responseString += new String("SOD Agent is successfully initialised for your organisation. A default template is copied. \n");
+            responseString += new String("SOD Agent is successfully initialised for your organisation.\n");
+            responseString += "A default template is copied. \n";
             responseString += "You can see how the form would look to your store managers here: \n";
             responseString += "/fillsodchecklist?hashtoken=" + hashtoken + " \n";
-            responseString += "\n If you want to change it, you can download the checklist from here, edit it and upload back the modified checklist. \n";
+            responseString += "\n If you want to change it, you can download the checklist from here\n";
             responseString += downloadChecklistURL;
+            responseString += "\n After download, edit it and upload back the modified checklist. \n";
             responseString += "\n Or you may directly want to roll out to your store managers. \n";
             responseString += "For rolling out use the prompt like Roll out to Name at mobile\n";
         } else {
@@ -103,11 +105,13 @@ public class SODAgentTools {
                     } catch (Exception e) {
                         throw new RuntimeException(e);
                     }
-                    responseString += new String("SOD Agent is successfully initialised for your organisation. A default template is copied. \n");
+                    responseString += new String("SOD Agent is successfully initialised for your organisation.\n");
+                    responseString += "A default template is copied. \n";
                     responseString += "You can see how the form would look to your store managers here: \n";
                     responseString += "/fillsodchecklist?hashtoken=" + hashtoken + " \n";
-                    responseString += "\n If you want to change it, you can download the checklist from here, edit it and upload back the modified checklist. \n";
+                    responseString += "\n If you want to change it, you can download the checklist from here\n";
                     responseString += downloadChecklistURL;
+                    responseString += "\n After download, edit it and upload back the modified checklist. \n";
                     responseString += "\n Or you may directly want to roll out to your store managers. \n";
                     responseString += "For rolling out use the prompt like Roll out to Name at mobile\n";
                     break;
