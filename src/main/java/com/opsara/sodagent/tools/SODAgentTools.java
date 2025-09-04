@@ -316,7 +316,7 @@ public class SODAgentTools {
     @Tool("Returns Detailed Report for a store. It returns the detailed report for a store with name storeName.")
     public String giveOneDetailedReport(String storeName) {
         String message = "Detailed report for " + storeName + ":\n";
-        String downLoadLink = "<a href=\"store360?storename=" + storeName + "\" target=\"_blank\">storeName 360</a>";
+        String downLoadLink = "<a href=\"../store360?storename=" + storeName + "\" target=\"_blank\">storeName 360</a>";
         return message + downLoadLink;
     }
 

@@ -126,7 +126,7 @@ public class SODAgentController {
      */
     @PostMapping("/chat")
     public ResponseEntity<AgentResponse> chat(@RequestBody AgentRequest request, HttpServletRequest httpRequest) {
-        logger.info("/chat called with : {}", request.getQuery());
+        logger.info("/chat called with : {}", request.getMessage());
         // TODO : Validate claims. Get organisation. Get Purchaed Agent. Find SOD. Not found throw UnAuthorised
 
         String organisationId = (String) httpRequest.getAttribute("organisationId");
@@ -135,11 +135,11 @@ public class SODAgentController {
 
         logger.info("/chat called with : {} {}", organisationId, userCredentials);
 
-        return ResponseEntity.ok(new AgentResponse(true, mainExecution(request.getQuery(), organisationId, userCredentials)));
+        return ResponseEntity.ok(new AgentResponse(true, mainExecution(request.getMessage(), organisationId, userCredentials)));
     }
     @Data
     private static class AgentRequest {
-        private String query;
+        private String message;
     }
 
     @Data
@@ -440,5 +440,12 @@ public class SODAgentController {
             String downLoadLink = "<a href=\"" + completeUrl + "\" target=\"_blank\">Download SODChecks.txt</a>";
             return downLoadLink;
         }
+    }
+
+
+    @RequestMapping(value = "/sodagent/upload", method = RequestMethod.OPTIONS)
+    public ResponseEntity<?> handleOptions() {
+        logger.info("OPTIONS preflight request received for /upload");
+        return ResponseEntity.ok().build();
     }
 }

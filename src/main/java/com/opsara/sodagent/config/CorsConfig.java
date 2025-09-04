@@ -20,7 +20,7 @@ public class CorsConfig implements WebMvcConfigurer {
     public void addCorsMappings(CorsRegistry registry) {
         registry.addMapping("/**") // Apply CORS to all paths
                 .allowedOriginPatterns(ALLOWED_ORIGINS) // Allow requests from this origin
-                .allowedMethods("*") // Allow all HTTP methods (GET, POST, PUT, DELETE, etc.)
+                .allowedMethods("GET", "POST", "PUT", "DELETE", "OPTIONS") // Allow all HTTP methods (GET, POST, PUT, DELETE, etc.)
                 .allowedHeaders("*") // Allow all headers
                 .allowCredentials(true) // Allow sending of credentials (cookies, HTTP authentication)
                 .maxAge(3600); // Cache the preflight response for 1 hour
