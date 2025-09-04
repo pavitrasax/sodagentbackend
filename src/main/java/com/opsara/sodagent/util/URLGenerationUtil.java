@@ -37,4 +37,5 @@ public class URLGenerationUtil {
         String decrypted = new String(cipher.doFinal(decoded));
         return decrypted.split("\\|", 4);
     }
+
 }

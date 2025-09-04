@@ -7,6 +7,7 @@ import com.opsara.sodagent.dto.ProblematicCheckpoint;
 import com.opsara.sodagent.entities.OrganisationChecklist;
 import com.opsara.sodagent.entities.UserChecklistData;
 import com.opsara.sodagent.services.SODAgentService;
+import com.opsara.sodagent.util.GeneralUtil;
 import com.opsara.sodagent.util.URLGenerationUtil;
 import dev.langchain4j.agent.tool.Tool;
 import lombok.Data;
@@ -82,15 +83,7 @@ public class SODAgentTools {
             } catch (Exception e) {
                 throw new RuntimeException(e);
             }
-            responseString += new String("SOD Agent is successfully initialised for your organisation.\n");
-            responseString += "A default template is copied. \n";
-            responseString += "You can see how the form would look to your store managers here: \n";
-            responseString += "/fillsodchecklist?hashtoken=" + hashtoken + " \n";
-            responseString += "\n If you want to change it, you can download the checklist from here\n";
-            responseString += downloadChecklistURL;
-            responseString += "\n After download, edit it and upload back the modified checklist. \n";
-            responseString += "\n Or you may directly want to roll out to your store managers. \n";
-            responseString += "For rolling out use the prompt like Roll out to Name at mobile\n";
+            responseString = GeneralUtil.generateInitMessage(downloadChecklistURL, hashtoken);
         } else {
             int status = existingChecklist.getStatus() != null ? existingChecklist.getStatus() : 0;
             switch (status) {
@@ -105,15 +98,7 @@ public class SODAgentTools {
                     } catch (Exception e) {
                         throw new RuntimeException(e);
                     }
-                    responseString += new String("SOD Agent is successfully initialised for your organisation.\n");
-                    responseString += "A default template is copied. \n";
-                    responseString += "You can see how the form would look to your store managers here: \n";
-                    responseString += "/fillsodchecklist?hashtoken=" + hashtoken + " \n";
-                    responseString += "\n If you want to change it, you can download the checklist from here\n";
-                    responseString += downloadChecklistURL;
-                    responseString += "\n After download, edit it and upload back the modified checklist. \n";
-                    responseString += "\n Or you may directly want to roll out to your store managers. \n";
-                    responseString += "For rolling out use the prompt like Roll out to Name at mobile\n";
+                    responseString = GeneralUtil.generateInitMessage(downloadChecklistURL, hashtoken);
                     break;
                 case 1:
                     logger.info("case 1 called  ....");
