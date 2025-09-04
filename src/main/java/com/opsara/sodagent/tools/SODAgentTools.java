@@ -105,15 +105,16 @@ public class SODAgentTools {
                     }
                     responseString += new String("SOD Agent is successfully initialised for your organisation. A default template is copied. \n");
                     responseString += "You can see how the form would look to your store managers here: \n";
-                    responseString += "fillsodchecklist?hashtoken=" + hashtoken + " \n";
-                    responseString += "If you want to change it, you can download the checklist from here, edit it and upload back the modified checklist. \n";
+                    responseString += "/fillsodchecklist?hashtoken=" + hashtoken + " \n";
+                    responseString += "\n If you want to change it, you can download the checklist from here, edit it and upload back the modified checklist. \n";
                     responseString += downloadChecklistURL;
-                    responseString += "Or you may directly want to roll out to your store managers. \n";
+                    responseString += "\n Or you may directly want to roll out to your store managers. \n";
                     responseString += "For rolling out use the prompt like Roll out to Name at mobile\n";
                     break;
                 case 1:
                     logger.info("case 1 called  ....");
                     responseString += new String("SOD Agent is already initialised with default checklist. Click here to download , edit and upload the checklist as per your choice. \n");
+                    responseString += downloadDefaultChecklist() + "\n";
                     responseString += "Otherwise Tell you do not want to edit and want to stay with default checklist. I will not remind you again. \n";
                     break;
                 case 2:
@@ -124,12 +125,12 @@ public class SODAgentTools {
                 case 3:
                     logger.info("case 3 called  ....");
                     responseString += new String("Your default checklist is already rolled out to few users. How ever I recommend you see it once , may be you want to edit and upload.\n");
+                    responseString += downloadDefaultChecklist() + "\n";
                     responseString += "Otherwise Tell you do not want to edit and want to stay with default checklist. I will not remind you again. \n";
                     break;
                 case 5:
                     logger.info("case 5 called  ....");
-                    responseString += new String("Hello Again. 3 of 5 people have already filled data. you can query for same.\n");
-                    responseString += new String("See sample prompts to query insights in tray on left hand side.\n");
+                    responseString += new String("Hello. See sample prompts to query insights in tray on left hand side. \n");
                     break;
                 default:
                     logger.info("case default called  ....");
