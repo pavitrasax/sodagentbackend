@@ -84,7 +84,9 @@ public class SODAgentController {
 
             responseString += new String("SOD Agent is successfully initialised for your organisation. A default template is copied. \n");
             responseString += "You can see how the form would look to your store managers here: \n";
-            responseString += "fillsodchecklist?hashtoken=" + hashtoken + " \n";
+            responseString += "<a href=\"";
+            responseString += "fillsodchecklist?hashtoken=" + hashtoken;
+            responseString += "\" target=\"_blank\">View Checklist</a>";
             responseString += "If you want to change it, you can download the checklist from here, edit it and upload back the modified checklist. \n";
             responseString += downloadChecklistURL;
             responseString += "Or you may directly want to roll out to your store managers. \n";
