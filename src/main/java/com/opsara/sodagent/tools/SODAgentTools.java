@@ -84,10 +84,10 @@ public class SODAgentTools {
             }
             responseString += new String("SOD Agent is successfully initialised for your organisation. A default template is copied. \n");
             responseString += "You can see how the form would look to your store managers here: \n";
-            responseString += "fillsodchecklist?hashtoken=" + hashtoken + " \n";
-            responseString += "If you want to change it, you can download the checklist from here, edit it and upload back the modified checklist. \n";
+            responseString += "/fillsodchecklist?hashtoken=" + hashtoken + " \n";
+            responseString += "\n If you want to change it, you can download the checklist from here, edit it and upload back the modified checklist. \n";
             responseString += downloadChecklistURL;
-            responseString += "Or you may directly want to roll out to your store managers. \n";
+            responseString += "\n Or you may directly want to roll out to your store managers. \n";
             responseString += "For rolling out use the prompt like Roll out to Name at mobile\n";
         } else {
             int status = existingChecklist.getStatus() != null ? existingChecklist.getStatus() : 0;
