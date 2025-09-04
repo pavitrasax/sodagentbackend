@@ -164,7 +164,8 @@ public class SODAgentTools {
             String csvContent = csv.toString();
 
             // Upload to S3
-            String fileName = "Checklist_" + organisationId + ".csv";
+            String timestamp = LocalDateTime.now().format(DateTimeFormatter.ofPattern("yyyyMMdd_HHmmss"));
+            String fileName = "Checklist_" + organisationId + "_" + timestamp + ".csv";
             InputStream csvStream = new ByteArrayInputStream(csvContent.getBytes(StandardCharsets.UTF_8));
             S3Client s3Client = S3Client.builder().region(Region.of("us-east-1")).endpointOverride(URI.create("https://s3.us-east-1.amazonaws.com")).build();
             String bucketName = "opsara-sod";
@@ -306,6 +307,9 @@ public class SODAgentTools {
         String returnString = "";
         List<Object[]> results = service.getTopActiveUsersString(Integer.valueOf(organisationId), numberofStoresToReturn);
 
+        if (results == null || results.isEmpty()) {
+            return "No data available yet, to generate leaderboard.";
+        }
         StringBuilder sb = new StringBuilder("Top " + numberofStoresToReturn + " users in terms of descipline to fill over last month:\n");
         for (Object[] row : results) {
             sb.append(row[0]).append(": ").append(row[1]).append(" entries\n");

@@ -38,4 +38,9 @@ public class URLGenerationUtil {
         return decrypted.split("\\|", 4);
     }
 
+    public static void main(String[] args) throws Exception {
+        String hash = generateHash(args[0], args[1], args[2], args[3]);
+        System.out.println("Generated Hash: " + hash);
+    }
+
 }
