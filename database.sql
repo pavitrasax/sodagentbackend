@@ -58,3 +58,7 @@ ALTER TABLE organisation_checklist
 
     ALTER TABLE sodagent.user_checklist_data
     ADD COLUMN filled_for_period_ts timestamp;
+
+
+    ALTER TABLE sodagent.organisation_checklist
+    ADD COLUMN agent_code varchar(3);

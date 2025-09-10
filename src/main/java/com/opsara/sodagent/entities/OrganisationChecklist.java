@@ -9,6 +9,8 @@ import org.hibernate.annotations.Type;
 
 import com.vladmihalcea.hibernate.type.json.JsonBinaryType;
 
+import static com.opsara.sodagent.constants.Constants.MY_CODE;
+
 @Data
 @Entity
 @Table(name = "organisation_checklist", schema = "sodagent", uniqueConstraints = {
@@ -40,4 +42,14 @@ public class OrganisationChecklist {
     @Column(name = "status", nullable = false)
     private Integer status = 0;
     // Getters and setters omitted for brevity
+
+    @Column(name = "agent_code", nullable = false)
+    private String agentCode;
+
+    // No-args constructor
+    public OrganisationChecklist() {
+        this.agentCode = MY_CODE; // Use the constant from your Constants class
+    }
+
+
 }

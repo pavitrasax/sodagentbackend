@@ -64,6 +64,7 @@ public class SODAgentService {
         newChecklist.setVersion(maxVersion + 1);
         newChecklist.setChecklistJson(checklistJson);
         newChecklist.setCreatedAt(LocalDateTime.now());
+        newChecklist.setStatus(1);
         newChecklist.setIsActive(true);
 
         return checklistRepository.save(newChecklist);
