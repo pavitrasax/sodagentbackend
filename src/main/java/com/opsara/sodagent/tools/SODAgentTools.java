@@ -9,6 +9,7 @@ import com.opsara.sodagent.entities.UserChecklistData;
 import com.opsara.sodagent.services.SODAgentService;
 import com.opsara.sodagent.util.GeneralUtil;
 import com.opsara.sodagent.util.URLGenerationUtil;
+import com.opsara.sodagent.util.WhatsappUtil;
 import dev.langchain4j.agent.tool.Tool;
 import lombok.Data;
 import org.slf4j.Logger;
@@ -18,6 +19,7 @@ import java.io.ByteArrayInputStream;
 import java.io.InputStream;
 import java.net.URI;
 import java.nio.charset.StandardCharsets;
+import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
 import java.util.*;
@@ -227,6 +229,22 @@ public class SODAgentTools {
             service.saveChecklist(checklist);
         }
 
+        String sodaChecklistUrl = "https://opsara.io/fillsodchecklist?hashtoken=";
+
+        DateTimeFormatter formatter = DateTimeFormatter.ofPattern("ddMMyyyy-00:00");
+        LocalDate today = LocalDate.now();
+       String dateString = today.format(formatter);
+        String hash = "";
+        try {
+            hash = URLGenerationUtil.generateHash(mobileNumbers.get(0), "mobile", dateString, organisationId);
+        } catch (Exception e) {
+            //throw new RuntimeException(e);
+        }
+
+        String whatsappMessage = "Request you to fill the SOD checklist today. It takes just 2 minutes. Click here: " + sodaChecklistUrl + hash + " Thank you!";
+        logger.info("WhatsApp Message to be sent: " + whatsappMessage);
+        WhatsappUtil.sendDirectMessage(whatsappMessage);
+
         mobileNumbers.forEach(mobile -> service.saveWhatsappUser(mobile, null, Integer.valueOf(organisationId)));
 
 
@@ -250,6 +268,27 @@ public class SODAgentTools {
         }
 
         mobileNameMaps.forEach((mobile, name) -> service.saveWhatsappUser(mobile, name, Integer.valueOf(organisationId)));
+        String sodaChecklistUrl = "https://opsara.io/fillsodchecklist?hashtoken=";
+
+
+
+        mobileNameMaps.forEach((mobile, name) -> {
+            DateTimeFormatter formatter = DateTimeFormatter.ofPattern("ddMMyyyy-00:00");
+            LocalDate today = LocalDate.now();
+            String dateString = today.format(formatter);
+            String hash = "";
+
+            try {
+                hash = URLGenerationUtil.generateHash(mobile, "mobile", dateString, organisationId);
+            } catch (Exception e) {
+                //throw new RuntimeException(e);
+            }
+
+            String whatsappMessage = "Dear " + name + "Request you to fill the SOD checklist today. It takes just 2 minutes. Click here: " + sodaChecklistUrl + hash + " Thank you!";
+            logger.info("WhatsApp Message to be sent: " + whatsappMessage);
+            WhatsappUtil.sendDirectMessage(whatsappMessage);
+        });
+
 
         return "We have stored the mobile numbers and user names and would send them whatsapp messages to fill in checklist";
     }
@@ -298,6 +337,7 @@ public class SODAgentTools {
             }
         }
 
+        WhatsappUtil.sendDirectMessage("Request you to fill the SOD checklist today. It takes just 2 minutes. Thank you!");
         // send whatsapp message to notFilled users
         return "Reminder sent to stores that have not completed the checklist. They will receive a WhatsApp message shortly.";
     }
