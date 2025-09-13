@@ -62,3 +62,27 @@ ALTER TABLE organisation_checklist
 
     ALTER TABLE sodagent.organisation_checklist
     ADD COLUMN agent_code varchar(3);
+
+
+
+    CREATE TABLE sodagent.vm_ideal_data (
+                                                  id SERIAL PRIMARY KEY,
+                                                  user_credential VARCHAR(100) NOT NULL,
+                                                  user_credential_type VARCHAR(10) NOT NULL,
+                                                  filled_for_period VARCHAR(20) NOT NULL,
+                                                  organisation_checklist_id BIGINT NOT NULL,
+                                                  data_json JSONB NOT NULL,
+                                                  created_at TIMESTAMP NOT NULL DEFAULT NOW(),
+                                                  CONSTRAINT fk_organisation_checklist
+                                                      FOREIGN KEY (organisation_checklist_id)
+                                                          REFERENCES sodagent.organisation_checklist(id)
+                                                          ON DELETE CASCADE,
+                                                  CONSTRAINT unique_admin_period_checklist
+                                                      UNIQUE (user_credential, user_credential_type, filled_for_period, organisation_checklist_id)
+    );
+
+
+    ALTER TABLE sodagent.user_checklist_data
+    ADD COLUMN compliance_score NUMERIC(5,2),
+    ADD COLUMN max_compliance_score NUMERIC(5,2),
+    ADD COLUMN compliance_feedback JSONB;

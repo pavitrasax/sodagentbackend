@@ -236,6 +236,10 @@ public class SODAgentController {
             return ResponseEntity.badRequest().body("Invalid hashtoken");
         }
 
+        if("email".equals(userCredentialType)) {
+            return ResponseEntity.ok("Information submitted successfully. Since it was for your trial, it will not show in any reports.");
+        }
+
         OrganisationChecklist checklistEntity = sodagentService.fetchLatestActiveChecklist(Integer.valueOf(orgId));
         String checklistTemplateJson = new String(checklistEntity.getChecklistJson().getBytes(), StandardCharsets.UTF_8);
 

@@ -6,6 +6,7 @@ import jakarta.persistence.*;
 import lombok.Data;
 import org.hibernate.annotations.Type;
 
+import java.math.BigDecimal;
 import java.time.LocalDateTime;
 
 @Data
@@ -52,4 +53,19 @@ public class UserChecklistData {
     private LocalDateTime filledForPeriodTs;
     // Getters and setters
     // (Omitted for brevity)
+
+
+    // For compliance_score (NUMERIC(5,2))
+    @Column(name = "compliance_score")
+    private BigDecimal complianceScore;
+
+    // For max_compliance_score (NUMERIC(5,2))
+    @Column(name = "max_compliance_score")
+    private BigDecimal maxComplianceScore;
+
+    @Type(JsonBinaryType.class)
+    @Column(name = "compliance_feedback", nullable = false, columnDefinition = "jsonb")
+    private String complianceFeedback;
+
+
 }

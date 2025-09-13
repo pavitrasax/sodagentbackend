@@ -5,12 +5,16 @@ import javax.crypto.spec.SecretKeySpec;
 import java.net.URLDecoder;
 import java.net.URLEncoder;
 import java.nio.charset.StandardCharsets;
+import java.time.LocalDate;
+import java.time.format.DateTimeFormatter;
+import java.util.ArrayList;
 import java.util.Base64;
 
 
 import java.net.URLEncoder;
 import java.net.URLDecoder;
 import java.nio.charset.StandardCharsets;
+import java.util.List;
 
 public class URLGenerationUtil {
 
@@ -39,8 +43,20 @@ public class URLGenerationUtil {
     }
 
     public static void main(String[] args) throws Exception {
-        String hash = generateHash(args[0], args[1], args[2], args[3]);
-        System.out.println("Generated Hash: " + hash);
+        String sodaChecklistUrl = "https://opsara.io/fillsodchecklist?hashtoken=";
+
+        List<String> dateStrings = new ArrayList<>();
+        DateTimeFormatter formatter = DateTimeFormatter.ofPattern("ddMMyyyy-00:00");
+        LocalDate today = LocalDate.now();
+        for (int i = 0; i < 5; i++) {
+            LocalDate date = today.minusDays(i);
+            dateStrings.add(date.format(formatter));
+        }
+
+        for (String dateString : dateStrings) {
+            String hash = generateHash(args[0], args[1], dateString, args[2]);
+            System.out.println(sodaChecklistUrl + hash);
+        }
     }
 
 }
