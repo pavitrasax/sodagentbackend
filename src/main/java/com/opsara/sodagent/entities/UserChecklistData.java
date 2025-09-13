@@ -64,7 +64,7 @@ public class UserChecklistData {
     private BigDecimal maxComplianceScore;
 
     @Type(JsonBinaryType.class)
-    @Column(name = "compliance_feedback", nullable = false, columnDefinition = "jsonb")
+    @Column(name = "compliance_feedback",  columnDefinition = "jsonb")
     private String complianceFeedback;
 
 
