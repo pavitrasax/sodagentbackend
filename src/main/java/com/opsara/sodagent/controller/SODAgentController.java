@@ -237,6 +237,7 @@ public class SODAgentController {
         }
 
         if("email".equals(userCredentialType)) {
+            logger.info("admin was trying to fill just to try. Returning with out saving.");
             return ResponseEntity.ok("Information submitted successfully. Since it was for your trial, it will not show in any reports.");
         }
 
