@@ -284,7 +284,7 @@ public class SODAgentTools {
                 //throw new RuntimeException(e);
             }
 
-            String whatsappMessage = "Dear " + name + "Request you to fill the SOD checklist today. It takes just 2 minutes. Click here: " + sodaChecklistUrl + hash + " Thank you!";
+            String whatsappMessage = "Dear " + name + " Request you to fill the SOD checklist today. It takes just 2 minutes. Click here: " + sodaChecklistUrl + hash + " Thank you!";
             logger.info("WhatsApp Message to be sent: " + whatsappMessage);
             WhatsappUtil.sendDirectMessage(whatsappMessage);
         });
