@@ -314,6 +314,10 @@ public class SODAgentTools {
         int notFilledCount = notFilled.size();
         String notFilledList = String.join(", ", notFilled);
 
+        if (notFilledCount == 0) {
+            return "All " + totalUsers + " stores have completed the checklist for today.";
+        }
+
         return notFilledCount + " out of " + totalUsers + " stores have not yet completed the checklist. "
                 + (notFilledCount > 0 ? "Pending: " + notFilledList + ". " : "")
                 + "Let me know if you want to send a reminder to them.";
