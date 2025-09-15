@@ -370,7 +370,7 @@ public class SODAgentTools {
 
     @Tool("Returns Most Problematic Check Points. It returns the list of most problematic check points based on the checklist filled by stores.")
     public List<ProblematicCheckpoint> giveMostProblematicCheckPoints() {
-        return service.giveMostProblematicCheckPoints();
+        return service.giveMostProblematicCheckPoints(Integer.valueOf(organisationId));
     }
 
     @Tool("Download Report. It generates a csv file report based on the date range provided and returns a download link.")

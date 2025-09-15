@@ -71,8 +71,6 @@ public class SODAgentService {
     }
 
 
-
-
     @Transactional
     public OrganisationChecklist fetchLatestActiveChecklist(Integer orgId) {
         List<OrganisationChecklist> checklists = checklistRepository
@@ -135,33 +133,35 @@ public class SODAgentService {
     }
 
 
-
-
-
-    public List<ProblematicCheckpoint> giveMostProblematicCheckPoints() {
+    public List<ProblematicCheckpoint> giveMostProblematicCheckPoints(int orgId) {
         String sql = """
-        SELECT
-          jsonb_data ->> 'question' AS question,
-          COUNT(*) AS no_count
-        FROM
-          sodagent.user_checklist_data,
-          jsonb_array_elements(data_json -> 'checklist_responses') AS jsonb_data
-        WHERE
-          jsonb_data ->> 'answer' = 'No'
-        GROUP BY
-          question
-        ORDER BY
-          no_count DESC
-        LIMIT 3
-        """;
+            SELECT
+              jsonb_data ->> 'question' AS question,
+              COUNT(*) AS no_count
+            FROM
+              sodagent.user_checklist_data ucd
+              INNER JOIN sodagent.whatsapp_users wu
+                ON ucd.user_credential = wu.mobile_number
+              , jsonb_array_elements(ucd.data_json -> 'checklist_responses') AS jsonb_data
+            WHERE
+              jsonb_data ->> 'answer' = 'No'
+              AND wu.organisation_id = ?
+            GROUP BY
+              question
+            ORDER BY
+              no_count DESC
+            LIMIT 3
+            """;
         return jdbcTemplate.query(
                 sql,
                 (rs, rowNum) -> new ProblematicCheckpoint(
                         rs.getString("question"),
                         rs.getInt("no_count")
-                )
+                ),
+                orgId
         );
     }
+
 
 
     public List<UserChecklistData> getUserChecklistDataBetweenDatesAndOrg(
@@ -176,7 +176,7 @@ public class SODAgentService {
                 .map(WhatsappUser::getMobileNumber)
                 .toList();
 
-   }
+    }
 
     public List<String> getUserChecklistDataFilledForPeriodAndOrg(String today, Integer orgId) {
         DateTimeFormatter formatter = DateTimeFormatter.ofPattern("ddMMyyyy");
@@ -192,12 +192,12 @@ public class SODAgentService {
     }
 
 
-
     public List<Object[]> getTopActiveUsersString(Integer orgId, int topN) {
         LocalDateTime fromDate = LocalDateTime.now().minusMonths(1);
         Pageable topCount = (Pageable) PageRequest.of(0, topN);
         List<Object[]> results = userChecklistDataRepository.findTopActiveUsersByOrgIdAndLastMonth(orgId, fromDate, topCount);
-        return  results;  }
+        return results;
+    }
 
 }
 
