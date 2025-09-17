@@ -1,97 +1,80 @@
 CREATE SCHEMA sodagent;
 SET search_path TO sodagent;
 
-CREATE TABLE organisation_checklist (
-                                        id SERIAL PRIMARY KEY,
-                                        org_id INTEGER NOT NULL,
-                                        version INTEGER NOT NULL,
-                                        checklist_json JSONB NOT NULL,
-                                        created_at TIMESTAMP NOT NULL DEFAULT NOW(),
-                                        is_active BOOLEAN NOT NULL DEFAULT FALSE,
-                                        CONSTRAINT unique_org_version UNIQUE (org_id, version)
-);
+--------------------------------------------------------------------------
+-- Table: sodagent.organisation_checklist
+-- DROP TABLE IF EXISTS sodagent.organisation_checklist;
+--------------------------------------------------------------------------
 
-CREATE TABLE sodagent.user_checklist_data (
-                                              id SERIAL PRIMARY KEY,
-                                              user_credential VARCHAR(100) NOT NULL,
-                                              user_credential_type VARCHAR(10) NOT NULL,
-                                              filled_for_period VARCHAR(20) NOT NULL,
-                                              organisation_checklist_id BIGINT NOT NULL,
-                                              data_json JSONB NOT NULL,
-                                              created_at TIMESTAMP NOT NULL DEFAULT NOW(),
-                                              CONSTRAINT fk_organisation_checklist
-                                                  FOREIGN KEY (organisation_checklist_id)
-                                                      REFERENCES sodagent.organisation_checklist(id)
-                                                      ON DELETE CASCADE,
-                                              CONSTRAINT unique_user_checklist
-                                                  UNIQUE (user_credential, user_credential_type, filled_for_period, organisation_checklist_id)
-);
-
-
-CREATE TABLE sodagent.rollout_users (
+CREATE TABLE IF NOT EXISTS sodagent.organisation_checklist
+(
     id SERIAL PRIMARY KEY,
-    name VARCHAR(255),
-    mobile_number VARCHAR(255) NOT NULL,
-    organisation_id INTEGER NOT NULL,
-    created_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP
+    org_id integer NOT NULL,
+    version integer NOT NULL,
+    checklist_json jsonb NOT NULL,
+    created_at timestamp without time zone NOT NULL DEFAULT now(),
+    is_active boolean NOT NULL DEFAULT false,
+    status integer DEFAULT 0,
+    agent_code character varying(3) COLLATE pg_catalog."default",
+    CONSTRAINT unique_org_version UNIQUE (org_id, version)
 );
 
-CREATE TABLE sodagent.stores (
+--------------------------------------------------------------------------
+-- Table: sodagent.rollout_users
+-- DROP TABLE IF EXISTS sodagent.rollout_users;
+--------------------------------------------------------------------------
+
+CREATE TABLE IF NOT EXISTS sodagent.rollout_users
+(
     id SERIAL PRIMARY KEY,
-    name VARCHAR(255) NOT NULL,
-    store_code VARCHAR(50) ,
-    address TEXT,
-    latitude DECIMAL(10, 7),
-    longitude DECIMAL(10, 7),
-    created_at TIMESTAMP DEFAULT NOW()
+    name character varying(255) COLLATE pg_catalog."default",
+    mobile_number character varying(255) COLLATE pg_catalog."default" NOT NULL,
+    organisation_id integer NOT NULL,
+    created_at timestamp without time zone NOT NULL DEFAULT CURRENT_TIMESTAMP
 );
 
-CREATE TABLE sodagent.whatsapp_users (
+--------------------------------------------------------------------------
+-- Table: sodagent.user_checklist_data
+-- DROP TABLE IF EXISTS sodagent.user_checklist_data;
+--------------------------------------------------------------------------
+
+CREATE TABLE IF NOT EXISTS sodagent.user_checklist_data
+(
     id SERIAL PRIMARY KEY,
-    name VARCHAR(255),
-    mobile_number VARCHAR(20) NOT NULL,
-    store_id INTEGER,
-    created_at TIMESTAMP DEFAULT NOW(),
-    CONSTRAINT fk_store
-        FOREIGN KEY (store_id)
-        REFERENCES sodagent.stores(id)
+    user_credential character varying(100) COLLATE pg_catalog."default" NOT NULL,
+    user_credential_type character varying(10) COLLATE pg_catalog."default" NOT NULL,
+    filled_for_period character varying(20) COLLATE pg_catalog."default" NOT NULL,
+    organisation_checklist_id bigint NOT NULL,
+    data_json jsonb NOT NULL,
+    created_at timestamp without time zone NOT NULL DEFAULT now(),
+    filled_for_period_ts timestamp without time zone,
+    compliance_score numeric(5,2),
+    max_compliance_score numeric(5,2),
+    compliance_feedback jsonb,
+    CONSTRAINT unique_user_checklist UNIQUE (user_credential, user_credential_type, filled_for_period, organisation_checklist_id),
+    CONSTRAINT fk_organisation_checklist FOREIGN KEY (organisation_checklist_id)
+        REFERENCES sodagent.organisation_checklist (id) MATCH SIMPLE
+        ON UPDATE NO ACTION
         ON DELETE CASCADE
 );
 
-ALTER TABLE sodagent.whatsapp_users
-ADD COLUMN organisation_id INTEGER;
+--------------------------------------------------------------------------
+-- Table: sodagent.vm_ideal_data
+-- DROP TABLE IF EXISTS sodagent.vm_ideal_data;
+--------------------------------------------------------------------------
 
-
-ALTER TABLE organisation_checklist
-    ADD COLUMN status INT DEFAULT 0;
-
-    ALTER TABLE sodagent.user_checklist_data
-    ADD COLUMN filled_for_period_ts timestamp;
-
-
-    ALTER TABLE sodagent.organisation_checklist
-    ADD COLUMN agent_code varchar(3);
-
-
-
-    CREATE TABLE sodagent.vm_ideal_data (
-                                                  id SERIAL PRIMARY KEY,
-                                                  user_credential VARCHAR(100) NOT NULL,
-                                                  user_credential_type VARCHAR(10) NOT NULL,
-                                                  filled_for_period VARCHAR(20) NOT NULL,
-                                                  organisation_checklist_id BIGINT NOT NULL,
-                                                  data_json JSONB NOT NULL,
-                                                  created_at TIMESTAMP NOT NULL DEFAULT NOW(),
-                                                  CONSTRAINT fk_organisation_checklist
-                                                      FOREIGN KEY (organisation_checklist_id)
-                                                          REFERENCES sodagent.organisation_checklist(id)
-                                                          ON DELETE CASCADE,
-                                                  CONSTRAINT unique_admin_period_checklist
-                                                      UNIQUE (user_credential, user_credential_type, filled_for_period, organisation_checklist_id)
-    );
-
-
-    ALTER TABLE sodagent.user_checklist_data
-    ADD COLUMN compliance_score NUMERIC(5,2),
-    ADD COLUMN max_compliance_score NUMERIC(5,2),
-    ADD COLUMN compliance_feedback JSONB;
+CREATE TABLE IF NOT EXISTS sodagent.vm_ideal_data
+(
+    id SERIAL PRIMARY KEY,
+    user_credential character varying(100) COLLATE pg_catalog."default" NOT NULL,
+    user_credential_type character varying(10) COLLATE pg_catalog."default" NOT NULL,
+    filled_for_period character varying(20) COLLATE pg_catalog."default" NOT NULL,
+    organisation_checklist_id bigint NOT NULL,
+    data_json jsonb NOT NULL,
+    created_at timestamp without time zone NOT NULL DEFAULT now(),
+    CONSTRAINT unique_admin_period_checklist UNIQUE (user_credential, user_credential_type, filled_for_period, organisation_checklist_id),
+    CONSTRAINT fk_organisation_checklist FOREIGN KEY (organisation_checklist_id)
+        REFERENCES sodagent.organisation_checklist (id) MATCH SIMPLE
+        ON UPDATE NO ACTION
+        ON DELETE CASCADE
+);
