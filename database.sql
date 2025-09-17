@@ -27,6 +27,15 @@ CREATE TABLE sodagent.user_checklist_data (
                                                   UNIQUE (user_credential, user_credential_type, filled_for_period, organisation_checklist_id)
 );
 
+
+CREATE TABLE sodagent.rollout_users (
+    id SERIAL PRIMARY KEY,
+    name VARCHAR(255),
+    mobile_number VARCHAR(255) NOT NULL,
+    organisation_id INTEGER NOT NULL,
+    created_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP
+);
+
 CREATE TABLE sodagent.stores (
     id SERIAL PRIMARY KEY,
     name VARCHAR(255) NOT NULL,

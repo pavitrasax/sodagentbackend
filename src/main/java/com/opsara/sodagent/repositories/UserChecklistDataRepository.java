@@ -16,15 +16,4 @@ public interface UserChecklistDataRepository extends JpaRepository<UserChecklist
             LocalDateTime start,
             LocalDateTime end
     );
-
-    @Query("""
-                SELECT ucd.userCredential, COUNT(ucd)
-                FROM UserChecklistData ucd
-                JOIN WhatsappUser wu ON ucd.userCredential = wu.mobileNumber
-                WHERE wu.orgId = :orgId
-                  AND ucd.filledForPeriodTs >= :fromDate
-                GROUP BY ucd.userCredential
-                ORDER BY COUNT(ucd) DESC
-            """)
-    List<Object[]> findTopActiveUsersByOrgIdAndLastMonth(@Param("orgId") Integer orgId, @Param("fromDate") LocalDateTime fromDate, Pageable pageable);
 }

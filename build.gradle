@@ -21,6 +21,7 @@ configurations {
 }
 
 repositories {
+    mavenLocal()
     mavenCentral()
 }
 
@@ -57,6 +58,9 @@ dependencies {
 
     implementation 'software.amazon.awssdk:s3:2.25.61'
     implementation 'software.amazon.awssdk:core:2.25.61'
+
+
+    implementation 'com.opsara:opsara-aaaservice:0.0.1-SNAPSHOT'
 }
 
 tasks.named('test') {

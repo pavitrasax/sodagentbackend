@@ -1,30 +1,31 @@
 package com.opsara.sodagent.services;
 
 
+import com.opsara.sodagent.config.TomcatLoggingConfig;
+import com.opsara.sodagent.entities.RolloutUser;
+import com.opsara.sodagent.repositories.RolloutUserRepository;
 import com.opsara.sodagent.dto.ProblematicCheckpoint;
 import com.opsara.sodagent.entities.OrganisationChecklist;
 import com.opsara.sodagent.entities.UserChecklistData;
-import com.opsara.sodagent.entities.WhatsappUser;
 import com.opsara.sodagent.repositories.OrganisationChecklistRepository;
 import com.opsara.sodagent.repositories.UserChecklistDataRepository;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.data.domain.PageRequest;
 import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
-
-import org.springframework.data.domain.Pageable;
 
 import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
 import java.util.List;
 
-import com.opsara.sodagent.repositories.WhatsappUserRepository;
-
 
 @Service
 public class SODAgentService {
+
+    private static final Logger logger = LoggerFactory.getLogger(SODAgentService.class);
 
     @Autowired
     private OrganisationChecklistRepository checklistRepository;
@@ -33,10 +34,12 @@ public class SODAgentService {
     private UserChecklistDataRepository userChecklistDataRepository;
 
     @Autowired
-    private WhatsappUserRepository whatsappUserRepository;
+    private RolloutUserRepository rolloutUserRepository;
 
     @Autowired
     private JdbcTemplate jdbcTemplate;
+
+
 
     @Transactional
     public OrganisationChecklist saveChecklist(Integer orgId, String checklistJson) {
@@ -119,39 +122,25 @@ public class SODAgentService {
     }
 
 
-    @Transactional
-    public WhatsappUser saveWhatsappUser(String mobileNumber, String whatsAppUserName, Integer orgId) {
-        if (mobileNumber == null || mobileNumber.trim().isEmpty()) {
-            throw new IllegalArgumentException("Mobile number is required");
-        }
-        WhatsappUser user = new WhatsappUser();
-        user.setMobileNumber(mobileNumber);
-        user.setName(whatsAppUserName);
-        user.setOrgId(orgId);
-        user.setCreatedAt(LocalDateTime.now());
-        return whatsappUserRepository.save(user);
-    }
-
-
     public List<ProblematicCheckpoint> giveMostProblematicCheckPoints(int orgId) {
         String sql = """
-            SELECT
-              jsonb_data ->> 'question' AS question,
-              COUNT(*) AS no_count
-            FROM
-              sodagent.user_checklist_data ucd
-              INNER JOIN sodagent.whatsapp_users wu
-                ON ucd.user_credential = wu.mobile_number
-              , jsonb_array_elements(ucd.data_json -> 'checklist_responses') AS jsonb_data
-            WHERE
-              jsonb_data ->> 'answer' = 'No'
-              AND wu.organisation_id = ?
-            GROUP BY
-              question
-            ORDER BY
-              no_count DESC
-            LIMIT 3
-            """;
+                SELECT
+                  jsonb_data ->> 'question' AS question,
+                  COUNT(*) AS no_count
+                FROM
+                  sodagent.user_checklist_data ucd
+                  INNER JOIN sodagent.whatsapp_users wu
+                    ON ucd.user_credential = wu.mobile_number
+                  , jsonb_array_elements(ucd.data_json -> 'checklist_responses') AS jsonb_data
+                WHERE
+                  jsonb_data ->> 'answer' = 'No'
+                  AND wu.organisation_id = ?
+                GROUP BY
+                  question
+                ORDER BY
+                  no_count DESC
+                LIMIT 3
+                """;
         return jdbcTemplate.query(
                 sql,
                 (rs, rowNum) -> new ProblematicCheckpoint(
@@ -163,19 +152,10 @@ public class SODAgentService {
     }
 
 
-
     public List<UserChecklistData> getUserChecklistDataBetweenDatesAndOrg(
             Integer organisationId, LocalDateTime fromDate, LocalDateTime toDate) {
         return userChecklistDataRepository.findByOrganisationChecklist_OrgIdAndFilledForPeriodTsBetween(
                 organisationId, fromDate, toDate);
-    }
-
-    public List<String> getAllWhatsappUserCredentialsByOrgId(Integer organisationId) {
-        List<WhatsappUser> users = whatsappUserRepository.findByOrgId(organisationId);
-        return users.stream()
-                .map(WhatsappUser::getMobileNumber)
-                .toList();
-
     }
 
     public List<String> getUserChecklistDataFilledForPeriodAndOrg(String today, Integer orgId) {
@@ -192,13 +172,21 @@ public class SODAgentService {
     }
 
 
-    public List<Object[]> getTopActiveUsersString(Integer orgId, int topN) {
-        LocalDateTime fromDate = LocalDateTime.now().minusMonths(1);
-        Pageable topCount = (Pageable) PageRequest.of(0, topN);
-        List<Object[]> results = userChecklistDataRepository.findTopActiveUsersByOrgIdAndLastMonth(orgId, fromDate, topCount);
-        return results;
+    public RolloutUser saveOrUpdateRolloutUser(String mobile, String name, Integer orgId) {
+        RolloutUser existingUser = rolloutUserRepository.findByMobileNumberAndOrgId(mobile, orgId).orElse(null);
+        if (existingUser != null) {
+            // Just ignore. Do nothing
+            logger.info("found a record. Ignoring insert and returning existing record.");
+            return existingUser;
+        } else {
+            RolloutUser rolloutUser = new RolloutUser();
+            rolloutUser.setMobileNumber(mobile);
+            rolloutUser.setName(name);
+            rolloutUser.setOrgId(orgId);
+            rolloutUser.setCreatedAt(LocalDateTime.now());
+            return rolloutUserRepository.save(rolloutUser);
+        }
     }
-
 }
 
 

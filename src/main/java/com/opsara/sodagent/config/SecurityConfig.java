@@ -2,6 +2,8 @@ package com.opsara.sodagent.config;
 
 
 import com.opsara.sodagent.security.JwtFilter;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
@@ -17,10 +19,12 @@ public class SecurityConfig {
     @Autowired
     private JwtFilter jwtFilter;
 
+    private static final Logger logger = LoggerFactory.getLogger(SecurityConfig.class);
+
     @Bean
     public SecurityFilterChain filterChain(HttpSecurity http) throws Exception {
 
-
+        logger.info("Setting up security filter chain");
         http
                 .csrf(csrf -> csrf.disable())
                 .sessionManagement(sm -> sm.sessionCreationPolicy(SessionCreationPolicy.STATELESS))

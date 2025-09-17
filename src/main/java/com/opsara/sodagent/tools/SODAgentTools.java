@@ -3,6 +3,7 @@ package com.opsara.sodagent.tools;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.ObjectMapper;
+import com.opsara.aaaservice.services.UserService;
 import com.opsara.sodagent.dto.ProblematicCheckpoint;
 import com.opsara.sodagent.entities.OrganisationChecklist;
 import com.opsara.sodagent.entities.UserChecklistData;
@@ -36,6 +37,7 @@ public class SODAgentTools {
 
 
     private SODAgentService service;
+    private UserService userService;
     private String organisationId;
     private static final Logger logger = LoggerFactory.getLogger(SODAgentTools.class);
     private static final List<String> CHECK_POINTS = List.of("Have doors been unlocked and the alarm system disabled?", "Have overnight security alerts or messages been reviewed?", "Is the CCTV system functioning and recording?", "Have all floors been swept and mopped?", "Have surfaces, shelves, mannequins, and display units been dusted?", "Are mirrors, glass doors, and fitting room areas clean?", "Have trash bins been emptied and liners replaced?", "Is the air-conditioning or ventilation working and set to a comfortable level?", "Is all store lighting switched on and functioning?", "Is background music playing at the correct volume?", "Are window displays clean, neat, and on theme?", "Are in-store displays set as per the planogram or promotional guidelines?", "Are mannequins dressed and positioned correctly?", "Are shelves and racks fully stocked with no empty gaps?", "Are all garments steamed/ironed and presentable?", "Have overnight deliveries been checked and reconciled with invoices?", "Are new arrivals tagged and priced?", "Are high-margin or new collection items placed in prime locations?", "Are adequate sizes and colors available for fast-moving SKUs?", "Are all POS systems powered on and operational?", "Is the sales software logged in and connected?", "Has the opening cash float been counted and prepared?", "Are receipt printers, barcode scanners, and payment terminals working?", "Has the team briefing been conducted for daily sales targets and promotions?", "Have staff roles and floor coverage been assigned?", "Have important updates from head office been shared?", "Are fire exits checked and clear?", "Are fire extinguishers accessible?", "Have fitting room emergency buttons been tested?", "Are there no tripping hazards on the shop floor?", "Is welcome signage and promotional material placed and visible?", "Are fitting rooms stocked with hangers, hooks, and clean seating?", "Are shopping bags, tissue paper, and gift wraps ready?", "Is hand sanitizer available at entrance and cash counter?");
@@ -44,8 +46,9 @@ public class SODAgentTools {
         this.service = service;
     }
 
-    public SODAgentTools(SODAgentService service, String organisationId) {
+    public SODAgentTools(SODAgentService service, UserService userService, String organisationId) {
         this.service = service;
+        this.userService = userService;
         this.organisationId = organisationId;
     }
 
@@ -245,8 +248,10 @@ public class SODAgentTools {
         logger.info("WhatsApp Message to be sent: " + whatsappMessage);
         WhatsappUtil.sendDirectMessage(whatsappMessage);
 
-        mobileNumbers.forEach(mobile -> service.saveWhatsappUser(mobile, null, Integer.valueOf(organisationId)));
-
+        mobileNumbers.forEach(mobile -> {
+            userService.saveOrUpdateStoreUser(mobile, null, Integer.valueOf(organisationId));
+            service.saveOrUpdateRolloutUser(mobile, null, Integer.valueOf(organisationId));
+        });
 
         return "We have stored the mobile numbers and would send them whatsapp messages to fill in checklist";
     }
@@ -267,7 +272,14 @@ public class SODAgentTools {
             service.saveChecklist(checklist);
         }
 
-        mobileNameMaps.forEach((mobile, name) -> service.saveWhatsappUser(mobile, name, Integer.valueOf(organisationId)));
+        mobileNameMaps.forEach((mobile, name) -> {
+            userService.saveOrUpdateStoreUser(mobile, name, Integer.valueOf(organisationId));
+            service.saveOrUpdateRolloutUser(mobile, name, Integer.valueOf(organisationId));
+        });
+
+
+        logger.info("fetchLatestActiveChecklist getting called with orgId: " + organisationId);
+
         String sodaChecklistUrl = "https://opsara.io/fillsodchecklist?hashtoken=";
 
 
@@ -297,7 +309,7 @@ public class SODAgentTools {
     @Tool("Returns Completion Status. It tells how many stores out of how many have completed the checklist.")
     public String returnCompletionStatus() {
 
-        List<String> allUserCredentials = service.getAllWhatsappUserCredentialsByOrgId(Integer.valueOf(organisationId));
+        List<String> allUserCredentials = userService.getAllStoreUserCredentialsByOrgId(Integer.valueOf(organisationId));
         int totalUsers = allUserCredentials.size();
 
         String today = LocalDateTime.now().format(DateTimeFormatter.ofPattern("ddMMyyyy"));
@@ -327,7 +339,7 @@ public class SODAgentTools {
     public String sendCompletionReminder() {
 
 
-        List<String> allUserCredentials = service.getAllWhatsappUserCredentialsByOrgId(Integer.valueOf(organisationId));
+        List<String> allUserCredentials = userService.getAllStoreUserCredentialsByOrgId(Integer.valueOf(organisationId));
         int totalUsers = allUserCredentials.size();
 
         String today = LocalDateTime.now().format(DateTimeFormatter.ofPattern("ddMMyyyy"));
@@ -344,21 +356,6 @@ public class SODAgentTools {
         WhatsappUtil.sendDirectMessage("Request you to fill the SOD checklist today. It takes just 2 minutes. Thank you!");
         // send whatsapp message to notFilled users
         return "Reminder sent to stores that have not completed the checklist. They will receive a WhatsApp message shortly.";
-    }
-
-    @Tool("Returns Leaderboard based on descipline of filling checklist from top. It returns the list of top {numberofStoresToReturn} users who are regular in filling.")
-    public String giveLeaderBoardfFomTop(int numberofStoresToReturn) {
-        String returnString = "";
-        List<Object[]> results = service.getTopActiveUsersString(Integer.valueOf(organisationId), numberofStoresToReturn);
-
-        if (results == null || results.isEmpty()) {
-            return "No data available yet, to generate leaderboard.";
-        }
-        StringBuilder sb = new StringBuilder("Top " + numberofStoresToReturn + " users in terms of descipline to fill over last month:\n");
-        for (Object[] row : results) {
-            sb.append(row[0]).append(": ").append(row[1]).append(" entries\n");
-        }
-        return sb.toString();
     }
 
     @Tool("Returns Detailed Report for a store. It returns the detailed report for a store with name storeName.")

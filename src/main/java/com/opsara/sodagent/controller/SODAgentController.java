@@ -1,6 +1,7 @@
 package com.opsara.sodagent.controller;
 
 import com.fasterxml.jackson.core.type.TypeReference;
+import com.opsara.aaaservice.services.UserService;
 import com.opsara.sodagent.services.SODAgentService;
 import com.opsara.sodagent.tools.SODAgentTools;
 import com.opsara.sodagent.util.GeneralUtil;
@@ -50,6 +51,9 @@ public class SODAgentController {
 
     @Autowired
     SODAgentService sodagentService;
+
+    @Autowired
+    UserService userService;
 
     /**
      * Initializes the SOD Agent for the requesting organization.
@@ -335,7 +339,7 @@ public class SODAgentController {
                 .build();
 
         logger.info("OrganisationId: " + organisationId);
-        SODAgentTools tools = new SODAgentTools(sodagentService, organisationId);
+        SODAgentTools tools = new SODAgentTools(sodagentService, userService, organisationId);
 
         Assistant assistant = AiServices.builder(Assistant.class).chatModel(model).tools(tools).chatMemory(MessageWindowChatMemory.withMaxMessages(10)).build();
         String answer = assistant.chatAndInvoke(query);
