@@ -129,7 +129,7 @@ public class SODAgentService {
                   COUNT(*) AS no_count
                 FROM
                   sodagent.user_checklist_data ucd
-                  INNER JOIN sodagent.whatsapp_users wu
+                  INNER JOIN sodagent.rollout_users wu
                     ON ucd.user_credential = wu.mobile_number
                   , jsonb_array_elements(ucd.data_json -> 'checklist_responses') AS jsonb_data
                 WHERE
