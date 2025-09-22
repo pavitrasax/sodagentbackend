@@ -114,7 +114,7 @@ public class SODAgentTools {
                 case 2:
                     logger.info("case 2 called  ....");
                     responseString += new String("Your SOD is initialised as per your template. Roll it out now \n");
-                    responseString += "For rolling out use the promt like Roll out to Name at mobile/email. \n";
+                    responseString += "For rolling out use the prompt like Roll out to Name at mobile. \n";
                     break;
                 case 3:
                     logger.info("case 3 called  ....");
