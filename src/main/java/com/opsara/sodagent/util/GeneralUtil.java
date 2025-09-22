@@ -12,7 +12,7 @@ public class GeneralUtil {
         responseString += csvUrl;
         responseString += "\n After download, edit it and upload back the modified checklist. \n";
         responseString += "\n Or you may directly want to roll out to your store managers. \n";
-        responseString += "For rolling out use the prompt like \"Roll out to <name> at <mobile>\". It would roll out to given person at given mobile number.  \n";
+        responseString += "For rolling out use the prompt like \"Roll out to name at mobile\". It would roll out to given person at given mobile number.  \n";
         responseString += "Or you can say \"Roll out to every one\". It would roll out to all store managers already existing in database.\n";
 
         return responseString;

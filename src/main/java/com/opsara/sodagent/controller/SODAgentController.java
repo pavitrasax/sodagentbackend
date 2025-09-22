@@ -177,7 +177,7 @@ public class SODAgentController {
         logger.info("Your Checklist is Stored in Database successfully");
 
         String responseMessage = "Your Checklist is Stored in Database successfully. \n";
-        responseMessage += "Now you may want to roll it out to store managers. Use prompt like \"Roll out to <name> at <mobile>\". It would roll out to given person at given mobile number. \n";
+        responseMessage += "Now you may want to roll it out to store managers. Use prompt like \"Roll out to name at mobile\". It would roll out to given person at given mobile number. \n";
         responseMessage += "Or you can say \"Roll out to every one\". It would roll out to all store managers already existing in database.\n";
         UploadResponse response = new UploadResponse(true, responseMessage);
         return ResponseEntity.ok(response);
