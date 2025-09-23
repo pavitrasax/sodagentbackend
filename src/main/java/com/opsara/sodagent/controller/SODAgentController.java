@@ -93,25 +93,25 @@ public class SODAgentController {
             switch (status) {
                 case 1:
                     responseString += new String("SOD Agent is already initialised with default checklist. Click here to download , edit and upload the checklist as per your choice. \n");
-                    responseString += downloadDefaultChecklist(organisationId);
-                    responseString += "Otherwise Tell you do not want to edit and want to stay with default checklist. I will not remind you again. \n";
+                    responseString += downloadDefaultChecklist(organisationId) + "\n";
+                    responseString += "If you do not want to edit and want to stay with default checklist, please let us know. I will not remind you again. \n";
                     break;
                 case 2:
                     responseString += new String("Your SOD is initialised as per your template. Roll it out now \n");
-                    responseString += "For rolling out use the prompt like Roll out to Name at mobile/email. \n";
+                    responseString += "For rolling out use the prompt like Roll out to Name at mobile. \n";
                     break;
                 case 3:
                     responseString += new String("Your default checklist is already rolled out to few users. How ever I recommend you see it once , may be you want to edit and upload again.\n");
                     responseString += "Click here to download , edit and upload";
-                    responseString += downloadDefaultChecklist(organisationId);
-                    responseString += "Otherwise Tell you do not want to edit and want to stay with default checklist. I will not remind you again. \n";
+                    responseString += downloadDefaultChecklist(organisationId) + "\n";
+                    responseString += "If you do not want to edit and want to stay with default checklist, please let us know. I will not remind you again. \n";
                     break;
                 case 5:
                     responseString += new String("Hello. You can start querying the data received from people you rolled it out to.\n");
-                    responseString += new String("See sample prompts to query insights in tray on left hand side.\n");
+                    responseString +=new String("See sample prompts to query insights in prompts guide.\n");
                     break;
                 default:
-                    responseString += new String("Hello. See sample prompts to query insights in tray on left hand side. \n");
+                    responseString += new String("Hello. See sample prompts to query insights in prompts guide.\n");
             }
         }
 
