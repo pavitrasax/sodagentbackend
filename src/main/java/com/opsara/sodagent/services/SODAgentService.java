@@ -47,7 +47,7 @@ public class SODAgentService {
 
         // Fetch all checklists for the org only once
         List<OrganisationChecklist> checklists = checklistRepository.findByOrgId(orgId);
-        final Integer[] maxStatus = {1};
+        final Integer[] maxStatus = {2};
         // Set all previous versions to inactive
         checklists.forEach(c -> {
             if (Boolean.TRUE.equals(c.getIsActive())) {
@@ -57,6 +57,9 @@ public class SODAgentService {
             }
         });
 
+        if (maxStatus[0] >= 3) {
+            maxStatus[0] = 5; // If there was already a status 2, set new to 3
+        }
 // Get latest version number
         Integer maxVersion = checklists.stream()
                 .map(OrganisationChecklist::getVersion)
