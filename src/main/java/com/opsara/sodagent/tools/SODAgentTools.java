@@ -216,6 +216,13 @@ public class SODAgentTools {
         return mobileNumbers;
     }
 
+    @Tool("Rolls out the checklist to every store user existing in database.")
+    public String rolloutToEveryOne(List<String> mobileNumbers) {
+        logger.info("Rollout to everyone is called ....");
+        List<String> allUsersInDBCredentials = userService.getAllStoreUserCredentialsByOrgId(Integer.valueOf(organisationId));
+        return rolloutToMobiles(allUsersInDBCredentials);
+    }
+
     @Tool("Rolls out the checklist to provided mobile numbers.")
     public String rolloutToMobiles(List<String> mobileNumbers) {
         logger.info("Rollout is called with mobile numbers. + mobileNumbers: " + mobileNumbers);
