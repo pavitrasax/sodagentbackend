@@ -47,11 +47,12 @@ public class SODAgentService {
 
         // Fetch all checklists for the org only once
         List<OrganisationChecklist> checklists = checklistRepository.findByOrgId(orgId);
-
+        final Integer[] maxStatus = {1};
         // Set all previous versions to inactive
         checklists.forEach(c -> {
             if (Boolean.TRUE.equals(c.getIsActive())) {
                 c.setIsActive(false);
+                maxStatus[0] = c.getStatus() > maxStatus[0] ? c.getStatus() : maxStatus[0];
                 checklistRepository.save(c);
             }
         });
@@ -67,7 +68,7 @@ public class SODAgentService {
         newChecklist.setVersion(maxVersion + 1);
         newChecklist.setChecklistJson(checklistJson);
         newChecklist.setCreatedAt(LocalDateTime.now());
-        newChecklist.setStatus(1);
+        newChecklist.setStatus(maxStatus[0]);
         newChecklist.setIsActive(true);
 
         return checklistRepository.save(newChecklist);
