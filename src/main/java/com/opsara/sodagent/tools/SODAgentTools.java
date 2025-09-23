@@ -360,13 +360,6 @@ public class SODAgentTools {
         return "Reminder sent to stores that have not completed the checklist. They will receive a WhatsApp message shortly.";
     }
 
-    @Tool("Returns Detailed Report for a store. It returns the detailed report for a store with name storeName.")
-    public String giveOneDetailedReport(String storeName) {
-        String message = "Detailed report for " + storeName + ":\n";
-        String downLoadLink = "<a href=\"../store360?storename=" + storeName + "\" target=\"_blank\">storeName 360</a>";
-        return message + downLoadLink;
-    }
-
     @Tool("Returns Most Problematic Check Points. It returns the list of most problematic check points based on the checklist filled by stores.")
     public List<ProblematicCheckpoint> giveMostProblematicCheckPoints() {
         return service.giveMostProblematicCheckPoints(Integer.valueOf(organisationId));
