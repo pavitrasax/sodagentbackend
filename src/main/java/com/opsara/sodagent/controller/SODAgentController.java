@@ -102,7 +102,7 @@ public class SODAgentController {
                     break;
                 case 3:
                     responseString += new String("Your default checklist is already rolled out to few users. How ever I recommend you see it once , may be you want to edit and upload again.\n");
-                    responseString += "Click here to download , edit and upload";
+                    responseString += "Click here to download , edit and upload \n";
                     responseString += downloadDefaultChecklist(organisationId) + "\n";
                     responseString += "If you do not want to edit and want to stay with default checklist, please let us know. I will not remind you again. \n";
                     break;
