@@ -1,5 +1,12 @@
 package com.opsara.sodagent.util;
 
+import java.util.Iterator;
+import java.util.List;
+
+import com.google.i18n.phonenumbers.PhoneNumberUtil;
+import com.google.i18n.phonenumbers.Phonenumber.PhoneNumber;
+
+
 public class GeneralUtil {
 
     public static String generateInitMessage(String csvUrl, String hashtoken) {
@@ -16,5 +23,31 @@ public class GeneralUtil {
         responseString += "Or you can say \"Roll out to every one\". It would roll out to all store managers already existing in database.\n";
 
         return responseString;
+    }
+
+    public static String validateMobileNumbersAndRemoveInvalid(List<String> mobileNumbers) {
+        PhoneNumberUtil phoneUtil = PhoneNumberUtil.getInstance();
+        StringBuilder returnMessage = new StringBuilder();
+        Iterator<String> iterator = mobileNumbers.iterator();
+        while (iterator.hasNext()) {
+            String mobile = iterator.next();
+            String input = "+" + mobile;
+            boolean isValid = true;
+            try {
+                PhoneNumber number = phoneUtil.parse(input, null);
+                isValid = phoneUtil.isValidNumber(number);
+            } catch (Exception e) {
+                isValid = false;
+            }
+            if (!isValid) {
+                returnMessage.append(mobile).append(", ");
+                iterator.remove(); // Safely remove invalid number
+            }
+        }
+        int returnMessageLength = returnMessage.length();
+        if (returnMessageLength > 0) {
+            returnMessage.setLength(returnMessageLength - 2); // Remove last comma and space
+        }
+        return returnMessage.toString();
     }
 }

@@ -225,6 +225,7 @@ public class SODAgentTools {
 
     @Tool("Rolls out the checklist to provided mobile numbers.")
     public String rolloutToMobiles(List<String> mobileNumbers) {
+        String validationMessage = GeneralUtil.validateMobileNumbersAndRemoveInvalid(mobileNumbers);
         logger.info("Rollout is called with mobile numbers. + mobileNumbers: " + mobileNumbers);
         if (mobileNumbers.isEmpty()) {
             return "No mobile numbers provided. Please provide a list of mobile numbers to send the checklist.";
@@ -262,14 +263,29 @@ public class SODAgentTools {
             service.saveOrUpdateRolloutUser(mobile, null, Integer.valueOf(organisationId));
         });
 
-        return "We have stored the mobile numbers and would send them whatsapp messages to fill in checklist";
+        String returnMessage = "";
+        if(!validationMessage.isEmpty()) {
+            returnMessage = "The following mobile numbers were invalid and ignored: " + validationMessage + ". ";
+            returnMessage += "We have stored remaining valid mobile numbers and would send them whatsapp messages to fill in checklist";
+        } else {
+            returnMessage = "We have stored the mobile numbers and would send them whatsapp messages to fill in checklist";
+        }
+
+        return returnMessage;
     }
 
     @Tool("Rolls out the checklist to provided map of mobile numbers and user names.")
     public String rolloutToMobileNameMap(Map<String, String> mobileNameMaps) {
         logger.info("Rollout is called with mobile numbers. mobileNameMaps: " + mobileNameMaps);
 
-        mobileNameMaps.forEach((k, v) -> logger.info("Key : " + k + " Value : " + v));
+        if (mobileNameMaps.isEmpty()) {
+            return "No mobile numbers provided. Please provide a list of mobile numbers to send the checklist.";
+        }
+
+        List<String> listOfMobiles = new ArrayList<>(mobileNameMaps.keySet());
+        String validationMessage = GeneralUtil.validateMobileNumbersAndRemoveInvalid(listOfMobiles);
+        mobileNameMaps.keySet().retainAll(listOfMobiles);
+
 
         OrganisationChecklist checklist = service.fetchLatestActiveChecklist(Integer.valueOf(organisationId));
         if (checklist != null) {
@@ -310,8 +326,15 @@ public class SODAgentTools {
             WhatsappUtil.sendDirectMessage(whatsappMessage);
         });
 
+        String returnMessage = "";
+        if(!validationMessage.isEmpty()) {
+            returnMessage = "The following mobile numbers were invalid and ignored: " + validationMessage + ". ";
+            returnMessage += "We have stored remaining valid mobile numbers and would send them whatsapp messages to fill in checklist";
+        } else {
+            returnMessage = "We have stored the mobile numbers and would send them whatsapp messages to fill in checklist";
+        }
 
-        return "We have stored the mobile numbers and user names and would send them whatsapp messages to fill in checklist";
+        return returnMessage;
     }
 
 
