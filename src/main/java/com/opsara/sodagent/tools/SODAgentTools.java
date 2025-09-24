@@ -225,11 +225,12 @@ public class SODAgentTools {
 
     @Tool("Rolls out the checklist to provided mobile numbers.")
     public String rolloutToMobiles(List<String> mobileNumbers) {
-        String validationMessage = GeneralUtil.validateMobileNumbersAndRemoveInvalid(mobileNumbers);
         logger.info("Rollout is called with mobile numbers. + mobileNumbers: " + mobileNumbers);
         if (mobileNumbers.isEmpty()) {
             return "No mobile numbers provided. Please provide a list of mobile numbers to send the checklist.";
         }
+
+        String validationMessage = GeneralUtil.validateMobileNumbersAndRemoveInvalid(mobileNumbers);
 
         logger.info("fetchLatestActiveChecklist getting called with orgId: " + organisationId);
         OrganisationChecklist checklist = service.fetchLatestActiveChecklist(Integer.valueOf(organisationId));
