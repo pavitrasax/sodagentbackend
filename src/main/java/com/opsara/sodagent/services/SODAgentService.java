@@ -1,7 +1,6 @@
 package com.opsara.sodagent.services;
 
 
-import com.opsara.sodagent.config.TomcatLoggingConfig;
 import com.opsara.sodagent.entities.RolloutUser;
 import com.opsara.sodagent.repositories.RolloutUserRepository;
 import com.opsara.sodagent.dto.ProblematicCheckpoint;
