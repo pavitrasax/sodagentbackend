@@ -3,6 +3,7 @@ package com.opsara.sodagent.tools;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.ObjectMapper;
+import com.opsara.aaaservice.entities.StoreUser;
 import com.opsara.aaaservice.services.UserService;
 import com.opsara.sodagent.dto.ProblematicCheckpoint;
 import com.opsara.sodagent.entities.OrganisationChecklist;
@@ -51,7 +52,6 @@ public class SODAgentTools {
         this.userService = userService;
         this.organisationId = organisationId;
     }
-
 
 
     @Tool("Initialise SOD Agent with a list of sample check points to track daily.")
@@ -126,11 +126,11 @@ public class SODAgentTools {
                 case 5:
                     logger.info("case 5 called  ....");
                     responseString += new String("Hello. You can start querying the data received from people you rolled it out to.\n");
-                    responseString +=new String("See sample prompts to query insights in prompts guide.\n");
+                    responseString += new String("See sample prompts to query insights in prompts guide.\n");
                     break;
                 default:
                     logger.info("case default called  ....");
-                    responseString +=new String("See sample prompts to query insights in prompts guide.\n");
+                    responseString += new String("See sample prompts to query insights in prompts guide.\n");
             }
 
         }
@@ -219,8 +219,13 @@ public class SODAgentTools {
     @Tool("Rolls out the checklist to every store user existing in database.")
     public String rolloutToEveryOne(List<String> mobileNumbers) {
         logger.info("Rollout to everyone is called ....");
-        List<String> allUsersInDBCredentials = userService.getAllStoreUserCredentialsByOrgId(Integer.valueOf(organisationId));
-        return rolloutToMobiles(allUsersInDBCredentials);
+        List<StoreUser> allUsersInDB = userService.getAllStoreUsersByOrgId(Integer.valueOf(organisationId));
+
+        Map<String, String> mobileNameMaps = new HashMap<>();
+        for (StoreUser user : allUsersInDB) {
+            mobileNameMaps.put(user.getMobileNumber(), user.getName());
+        }
+        return rolloutToMobileNameMap(mobileNameMaps);
     }
 
     @Tool("Rolls out the checklist to provided mobile numbers.")
@@ -247,7 +252,7 @@ public class SODAgentTools {
 
         DateTimeFormatter formatter = DateTimeFormatter.ofPattern("ddMMyyyy-00:00");
         LocalDate today = LocalDate.now();
-       String dateString = today.format(formatter);
+        String dateString = today.format(formatter);
         String hash = "";
         try {
             hash = URLGenerationUtil.generateHash(mobileNumbers.get(0), "mobile", dateString, organisationId);
@@ -265,7 +270,7 @@ public class SODAgentTools {
         });
 
         String returnMessage = "";
-        if(!validationMessage.isEmpty()) {
+        if (!validationMessage.isEmpty()) {
             returnMessage = "The following mobile numbers were invalid and ignored: " + validationMessage + ". ";
             returnMessage += "We have stored remaining valid mobile numbers and would send them whatsapp messages to fill in checklist";
         } else {
@@ -309,7 +314,6 @@ public class SODAgentTools {
         String sodaChecklistUrl = "https://opsara.io/fillsodchecklist?hashtoken=";
 
 
-
         mobileNameMaps.forEach((mobile, name) -> {
             DateTimeFormatter formatter = DateTimeFormatter.ofPattern("ddMMyyyy-00:00");
             LocalDate today = LocalDate.now();
@@ -328,7 +332,7 @@ public class SODAgentTools {
         });
 
         String returnMessage = "";
-        if(!validationMessage.isEmpty()) {
+        if (!validationMessage.isEmpty()) {
             returnMessage = "The following mobile numbers were invalid and ignored: " + validationMessage + ". ";
             returnMessage += "We have stored remaining valid mobile numbers and would send them whatsapp messages to fill in checklist";
         } else {
