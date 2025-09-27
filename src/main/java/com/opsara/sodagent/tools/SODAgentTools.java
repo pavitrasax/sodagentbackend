@@ -27,9 +27,7 @@ import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
 import java.util.*;
 
-
-import static com.opsara.sodagent.constants.Constants.AWS_BUCKET_NAME;
-import static com.opsara.sodagent.constants.Constants.CDN_BASE_URL;
+import static com.opsara.sodagent.constants.Constants.*;
 
 @Data
 public class SODAgentTools {
@@ -485,6 +483,26 @@ public class SODAgentTools {
         logger.info("User chose to skip editing the checklist and proceed with rollout.");
         service.markChecklistStatusAsTwo(Integer.valueOf(organisationId));
 
+    }
+
+    @Tool("Previews a checklist by providing a direct link to open it.")
+    public String previewChecklist() {
+        logger.info("Returning link to preview checklist");
+        String hashtoken = null;
+        try {
+            hashtoken = URLGenerationUtil.generateHash("preview@opsara.io", "email", "01092025-00:00", organisationId);
+        } catch (Exception e) {
+            throw new RuntimeException(e);
+        }
+
+        String message = "You can see how the form would look to your store managers here: \n";
+
+        String downLoadLink = "[Here](" + OPSARA_WEB_URL + "/fillsodchecklist?hashtoken=" + hashtoken + ")";
+        String finalMesssage = message + downLoadLink;
+
+        logger.info("Final Message: " + finalMesssage);
+
+        return finalMesssage;
     }
 
 }
