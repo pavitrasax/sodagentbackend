@@ -185,8 +185,9 @@ public class SODAgentTools {
             InputStream csvStream = new ByteArrayInputStream(csvContent.getBytes(StandardCharsets.UTF_8));
 
             try {
-                String s3Url = AWSUtil.uploadFileToS3(AWS_BUCKET_NAME, fileName, csvStream, csvContent.getBytes(StandardCharsets.UTF_8).length, "text/csv");
-                return "<a href=\"" + s3Url + "\" target=\"_blank\">Download Checklist CSV</a>";
+                AWSUtil.uploadFileToS3(AWS_BUCKET_NAME, fileName, csvStream, csvContent.getBytes(StandardCharsets.UTF_8).length, "text/csv");
+                String preSignedS3Url = AWSUtil.generatePresignedUrl(AWS_BUCKET_NAME, fileName); // 24 hours expiry
+                return "<a href=\"" + preSignedS3Url + "\" target=\"_blank\">Download Checklist CSV</a>";
             } catch (Exception e) {
                 logger.error("Error uploading checklist CSV to S3", e);
                 // fallback to hardcoded file
