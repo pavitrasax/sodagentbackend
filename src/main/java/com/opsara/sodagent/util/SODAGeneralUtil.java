@@ -4,10 +4,15 @@ import java.util.Iterator;
 import java.util.List;
 
 import com.google.i18n.phonenumbers.PhoneNumberUtil;
+import com.google.i18n.phonenumbers.Phonenumber;
 import com.google.i18n.phonenumbers.Phonenumber.PhoneNumber;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 
-public class GeneralUtil {
+public class SODAGeneralUtil {
+
+    private static final Logger logger = LoggerFactory.getLogger(SODAGeneralUtil.class);
 
     public static String generateInitMessage(String csvUrl, String hashtoken) {
         String responseString = new String();
@@ -25,7 +30,24 @@ public class GeneralUtil {
         return responseString;
     }
 
+    /**
+     * Validates a list of mobile numbers and removes any invalid numbers from the list.
+     * <p>
+     * Each number is expected to be in international format (without the leading '+').
+     * Invalid numbers are removed from the input list, and their values are returned as a comma-separated string.
+     * <p>
+     * Uses Google's libphonenumber for validation.
+     *
+     * @param mobileNumbers the list of mobile numbers to validate and clean; invalid numbers will be removed from this list
+     * @return a comma-separated string of invalid mobile numbers, or an empty string if all numbers are valid
+     */
+    // Note: This method modifies the input list by removing invalid numbers.
+    // Note: I tried to move all utility methods to AAA Service to that all Agents could use them through exported jar
+    // But, some how when Tools are invoked by Langchain, it is not able to invoke the method from GeneralUtil of exported jar.
+    // Forced to keep this duplicated method in all Agents where ever needed.
+
     public static String validateMobileNumbersAndRemoveInvalid(List<String> mobileNumbers) {
+        logger.info("Validating mobile numbers: " + mobileNumbers);
         PhoneNumberUtil phoneUtil = PhoneNumberUtil.getInstance();
         StringBuilder returnMessage = new StringBuilder();
         Iterator<String> iterator = mobileNumbers.iterator();
@@ -34,9 +56,11 @@ public class GeneralUtil {
             String input = "+" + mobile;
             boolean isValid = true;
             try {
-                PhoneNumber number = phoneUtil.parse(input, null);
+                logger.info("Validating number with phoneUtil: " + input);
+                Phonenumber.PhoneNumber number = phoneUtil.parse(input, null);
                 isValid = phoneUtil.isValidNumber(number);
             } catch (Exception e) {
+                logger.info("Exception while validating number: " + e.getMessage());
                 isValid = false;
             }
             if (!isValid) {
@@ -48,6 +72,7 @@ public class GeneralUtil {
         if (returnMessageLength > 0) {
             returnMessage.setLength(returnMessageLength - 2); // Remove last comma and space
         }
+        logger.info("Invalid mobile numbers: " + returnMessage.toString());
         return returnMessage.toString();
     }
 }

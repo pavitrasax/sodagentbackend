@@ -5,13 +5,14 @@ import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.opsara.aaaservice.entities.StoreUser;
 import com.opsara.aaaservice.services.UserService;
+import com.opsara.aaaservice.util.AWSUtil;
+import com.opsara.aaaservice.util.URLGenerationUtil;
+import com.opsara.aaaservice.util.WhatsappUtil;
 import com.opsara.sodagent.dto.ProblematicCheckpoint;
 import com.opsara.sodagent.entities.OrganisationChecklist;
 import com.opsara.sodagent.entities.UserChecklistData;
 import com.opsara.sodagent.services.SODAgentService;
-import com.opsara.sodagent.util.GeneralUtil;
-import com.opsara.sodagent.util.URLGenerationUtil;
-import com.opsara.sodagent.util.WhatsappUtil;
+import com.opsara.sodagent.util.SODAGeneralUtil;
 import dev.langchain4j.agent.tool.Tool;
 import lombok.Data;
 import org.slf4j.Logger;
@@ -26,11 +27,8 @@ import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
 import java.util.*;
 
-import software.amazon.awssdk.core.sync.RequestBody;
-import software.amazon.awssdk.services.s3.S3Client;
-import software.amazon.awssdk.regions.Region;
-import software.amazon.awssdk.services.s3.model.PutObjectRequest;
 
+import static com.opsara.sodagent.constants.Constants.AWS_BUCKET_NAME;
 import static com.opsara.sodagent.constants.Constants.CDN_BASE_URL;
 
 @Data
@@ -77,44 +75,45 @@ public class SODAgentTools {
 
         OrganisationChecklist existingChecklist = service.fetchLatestActiveChecklist(orgId);
         String responseString = "";
+
+        String hashtoken = null;
+        try {
+            hashtoken = URLGenerationUtil.generateHash("preview@opsara.io", "email", "01092025-00:00", organisationId);
+
+        } catch (Exception e) {
+            throw new RuntimeException(e);
+        }
+
         if (existingChecklist == null) {
             service.saveChecklist(orgId, checkListJson);
             logger.info("service.saveChecklist called  ....");
             String downloadChecklistURL = downloadDefaultChecklist();
-            String hashtoken = null;
-            try {
-                hashtoken = URLGenerationUtil.generateHash("preview@opsara.io", "email", "01092025-00:00", organisationId);
 
-            } catch (Exception e) {
-                throw new RuntimeException(e);
-            }
-            responseString = GeneralUtil.generateInitMessage(downloadChecklistURL, hashtoken);
+            responseString = SODAGeneralUtil.generateInitMessage(downloadChecklistURL, hashtoken);
         } else {
             int status = existingChecklist.getStatus() != null ? existingChecklist.getStatus() : 0;
             switch (status) {
                 case 0:
                     logger.info("case 0 called  ....");
                     String downloadChecklistURL = downloadDefaultChecklist();
-                    String hashtoken = null;
-                    try {
-                        hashtoken = URLGenerationUtil.generateHash("preview@opsara.io", "email", "01092025-00:00", organisationId);
-                        logger.info("Hash Token generated with in INIT as " + hashtoken);
-
-                    } catch (Exception e) {
-                        throw new RuntimeException(e);
-                    }
-                    responseString = GeneralUtil.generateInitMessage(downloadChecklistURL, hashtoken);
+                    responseString = SODAGeneralUtil.generateInitMessage(downloadChecklistURL, hashtoken);
                     break;
                 case 1:
                     logger.info("case 1 called  ....");
                     responseString += new String("SOD Agent is already initialised with default checklist. Click here to download , edit and upload the checklist as per your choice. \n");
                     responseString += downloadDefaultChecklist() + "\n";
                     responseString += "If you do not want to edit and want to stay with default checklist, please let us know. I will not remind you again. \n";
+                    responseString += "You can always preview how it looks to store managers here. \n";
+                    responseString += "<a href=\"" + "/fillsodchecklist?hashtoken=" + hashtoken + "\" target=\"_blank\">View Checklist</a>" + " \n";
                     break;
                 case 2:
                     logger.info("case 2 called  ....");
                     responseString += new String("Your SOD is initialised as per your template. Roll it out now \n");
                     responseString += "For rolling out use the prompt like Roll out to Name at mobile. \n";
+                    responseString += "You can always preview how it looks to store managers here. \n";
+                    responseString += "<a href=\"" + "/fillsodchecklist?hashtoken=" + hashtoken + "\" target=\"_blank\">View Checklist</a>" + " \n";
+                    responseString += "You can also download the checklist you uploaded here. \n";
+                    responseString += downloadDefaultChecklist() + "\n";
                     break;
                 case 3:
                     logger.info("case 3 called  ....");
@@ -122,15 +121,25 @@ public class SODAgentTools {
                     responseString += "Click here to download , edit and upload";
                     responseString += downloadDefaultChecklist() + "\n";
                     responseString += "If you do not want to edit and want to stay with default checklist, please let us know. I will not remind you again. \n";
+                    responseString += "You can always preview how it looks to store managers here. \n";
+                    responseString += "<a href=\"" + "/fillsodchecklist?hashtoken=" + hashtoken + "\" target=\"_blank\">View Checklist</a>" + " \n";
                     break;
                 case 5:
                     logger.info("case 5 called  ....");
                     responseString += new String("Hello. You can start querying the data received from people you rolled it out to.\n");
                     responseString += new String("See sample prompts to query insights in prompts guide.\n");
+                    responseString += "You can always preview how it looks to store managers here. \n";
+                    responseString += "<a href=\"" + "/fillsodchecklist?hashtoken=" + hashtoken + "\" target=\"_blank\">View Checklist</a>" + " \n";
+                    responseString += "You can also download the checklist you uploaded here. \n";
+                    responseString += downloadDefaultChecklist() + "\n";
                     break;
                 default:
                     logger.info("case default called  ....");
                     responseString += new String("See sample prompts to query insights in prompts guide.\n");
+                    responseString += "You can always preview how it looks to store managers here. \n";
+                    responseString += "<a href=\"" + "/fillsodchecklist?hashtoken=" + hashtoken + "\" target=\"_blank\">View Checklist</a>" + " \n";
+                    responseString += "You can also download the checklist you uploaded here. \n";
+                    responseString += downloadDefaultChecklist() + "\n";
             }
 
         }
@@ -172,14 +181,12 @@ public class SODAgentTools {
 
             // Upload to S3
             String timestamp = LocalDateTime.now().format(DateTimeFormatter.ofPattern("yyyyMMdd_HHmmss"));
-            String fileName = "Checklist_" + organisationId + "_" + timestamp + ".csv";
+            String fileName = organisationId + "/Checklist_" + organisationId + "_" + timestamp + ".csv";
             InputStream csvStream = new ByteArrayInputStream(csvContent.getBytes(StandardCharsets.UTF_8));
-            S3Client s3Client = S3Client.builder().region(Region.of("us-east-1")).endpointOverride(URI.create("https://s3.us-east-1.amazonaws.com")).build();
-            String bucketName = "opsara-sod";
-            String key = fileName;
-            PutObjectRequest putObjectRequest = PutObjectRequest.builder().bucket(bucketName).key(key).contentType("text/csv").build();
+
             try {
-                s3Client.putObject(putObjectRequest, RequestBody.fromInputStream(csvStream, csvContent.getBytes(StandardCharsets.UTF_8).length));
+                String s3Url = AWSUtil.uploadFileToS3(AWS_BUCKET_NAME, fileName, csvStream, csvContent.getBytes(StandardCharsets.UTF_8).length, "text/csv");
+                return "<a href=\"" + s3Url + "\" target=\"_blank\">Download Checklist CSV</a>";
             } catch (Exception e) {
                 logger.error("Error uploading checklist CSV to S3", e);
                 // fallback to hardcoded file
@@ -188,8 +195,6 @@ public class SODAgentTools {
                 String fallbackLink = "<a href=\"" + fallbackUrl + "\" target=\"_blank\">Download SODChecks.txt</a>";
                 return fallbackLink;
             }
-            String s3Url = "https://" + bucketName + ".s3.amazonaws.com/" + key;
-            return "<a href=\"" + s3Url + "\" target=\"_blank\">Download Checklist CSV</a>";
         } else {
             // fallback to hardcoded file
             String fileName = "SODChecks.txt";
@@ -235,7 +240,7 @@ public class SODAgentTools {
             return "No mobile numbers provided. Please provide a list of mobile numbers to send the checklist.";
         }
 
-        String validationMessage = GeneralUtil.validateMobileNumbersAndRemoveInvalid(mobileNumbers);
+        String validationMessage = SODAGeneralUtil.validateMobileNumbersAndRemoveInvalid(mobileNumbers);
 
         logger.info("fetchLatestActiveChecklist getting called with orgId: " + organisationId);
         OrganisationChecklist checklist = service.fetchLatestActiveChecklist(Integer.valueOf(organisationId));
@@ -289,7 +294,7 @@ public class SODAgentTools {
         }
 
         List<String> listOfMobiles = new ArrayList<>(mobileNameMaps.keySet());
-        String validationMessage = GeneralUtil.validateMobileNumbersAndRemoveInvalid(listOfMobiles);
+        String validationMessage = SODAGeneralUtil.validateMobileNumbersAndRemoveInvalid(listOfMobiles);
         mobileNameMaps.keySet().retainAll(listOfMobiles);
 
 
@@ -457,29 +462,21 @@ public class SODAgentTools {
 
         String csvContent = csv.toString();
 
-        // Upload to S3 (pseudo code, replace with your S3 client)
         String fileName = "UserChecklistReport_" + fromDateTime + "_to_" + fromDateTime + ".csv";
         InputStream csvStream = new ByteArrayInputStream(csvContent.getBytes(StandardCharsets.UTF_8));
-        S3Client s3Client = S3Client.builder().region(Region.of("us-east-1")).endpointOverride(URI.create("https://s3.us-east-1.amazonaws.com")).build();
 
         String bucketName = "opsara-sod";
-        String key = fileName;
 
-        PutObjectRequest putObjectRequest = PutObjectRequest.builder().bucket(bucketName).key(key).contentType("text/csv").build();
 
         try {
-            s3Client.putObject(putObjectRequest, RequestBody.fromInputStream(csvStream, csvContent.getBytes(StandardCharsets.UTF_8).length));
+            String s3Url =  AWSUtil.uploadFileToS3(AWS_BUCKET_NAME, fileName, csvStream, csvContent.getBytes(StandardCharsets.UTF_8).length, "text/csv");
+            String preSignedUrl = AWSUtil.generatePresignedUrl(AWS_BUCKET_NAME, fileName);
+            return "Download your report here: " + preSignedUrl;
         } catch (Exception e) {
             logger.error("Error uploading report to S3", e);
+            return "Error in generating your report.";
         }
 
-
-        // Construct the S3 URL (public access or presigned URL as per your setup)
-        // TODO - Generate presigned URL with expiry
-        String s3Url = "https://" + bucketName + ".s3.amazonaws.com/" + key;
-
-
-        return "Download your report here: " + s3Url;
     }
 
     @Tool("Skip Edit Checklist. Skips the edit checklist reminder and starts for next stage which is rollout.")
