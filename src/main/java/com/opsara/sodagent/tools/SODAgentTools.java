@@ -6,6 +6,7 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import com.opsara.aaaservice.entities.StoreUser;
 import com.opsara.aaaservice.services.UserService;
 import com.opsara.aaaservice.util.AWSUtil;
+import com.opsara.aaaservice.util.MSG91WhatsappUtil;
 import com.opsara.aaaservice.util.URLGenerationUtil;
 import com.opsara.aaaservice.util.WhatsappUtil;
 import com.opsara.sodagent.dto.ProblematicCheckpoint;
@@ -330,9 +331,7 @@ public class SODAgentTools {
                 //throw new RuntimeException(e);
             }
 
-            String whatsappMessage = "Dear " + name + " Request you to fill the SOD checklist today. It takes just 2 minutes. Click here: " + sodaChecklistUrl + hash + " Thank you!";
-            logger.info("WhatsApp Message to be sent: " + whatsappMessage);
-            WhatsappUtil.sendDirectMessage(whatsappMessage);
+            MSG91WhatsappUtil.sendGenericFillFormMessageOTP(mobile, name, "sod form", dateString, "4", "fillsodchecklist?hashtoken=" + hash);
         });
 
         String returnMessage = "";

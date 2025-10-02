@@ -75,4 +75,5 @@ public class SODAGeneralUtil {
         logger.info("Invalid mobile numbers: " + returnMessage.toString());
         return returnMessage.toString();
     }
+
 }
