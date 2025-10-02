@@ -6,7 +6,7 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import com.opsara.aaaservice.entities.StoreUser;
 import com.opsara.aaaservice.services.UserService;
 import com.opsara.aaaservice.util.AWSUtil;
-import com.opsara.aaaservice.util.MSG91WhatsappUtil;
+import com.opsara.sodagent.util.MSG91WhatsappUtil;
 import com.opsara.aaaservice.util.URLGenerationUtil;
 import com.opsara.aaaservice.util.WhatsappUtil;
 import com.opsara.sodagent.dto.ProblematicCheckpoint;
