@@ -273,8 +273,8 @@ public class SODAgentTools {
                 //throw new RuntimeException(e);
             }
 
-            MSG91WhatsappUtil.sendGenericFillFormMessageOTP(mobile, null, "sod form", dateString, "4", sodaChecklistUrl + hash);
-
+            String whatsappUtilResponse = MSG91WhatsappUtil.sendGenericFillFormMessageOTP(mobile, null, "sod form", dateString, "4", sodaChecklistUrl + hash);
+            logger.info("whatsappUtilResponse " + whatsappUtilResponse);
         });
 
         String returnMessage = "";
@@ -328,8 +328,8 @@ public class SODAgentTools {
                 //throw new RuntimeException(e);
             }
 
-            MSG91WhatsappUtil.sendGenericFillFormMessageOTP(mobile, name, "sod form", dateString, "4", sodaChecklistUrl + hash);
-
+            String whatsappUtilResponse = MSG91WhatsappUtil.sendGenericFillFormMessageOTP(mobile, name, "sod form", dateString, "4", sodaChecklistUrl + hash);
+            logger.info("whatsappUtilResponse " + whatsappUtilResponse);
         });
 
 
