@@ -253,25 +253,28 @@ public class SODAgentTools {
             service.saveChecklist(checklist);
         }
 
-        String sodaChecklistUrl = "https://opsara.io/fillsodchecklist?hashtoken=";
 
+
+
+        String sodaChecklistUrl = "fillsodchecklist?hashtoken=";
         DateTimeFormatter formatter = DateTimeFormatter.ofPattern("ddMMyyyy-00:00");
         LocalDate today = LocalDate.now();
         String dateString = today.format(formatter);
-        String hash = "";
-        try {
-            hash = URLGenerationUtil.generateHash(mobileNumbers.get(0), "mobile", dateString, organisationId);
-        } catch (Exception e) {
-            //throw new RuntimeException(e);
-        }
-
-        String whatsappMessage = "Request you to fill the SOD checklist today. It takes just 2 minutes. Click here: " + sodaChecklistUrl + hash + " Thank you!";
-        logger.info("WhatsApp Message to be sent: " + whatsappMessage);
-        WhatsappUtil.sendDirectMessage(whatsappMessage);
 
         mobileNumbers.forEach(mobile -> {
             userService.saveOrUpdateStoreUser(mobile, null, Integer.valueOf(organisationId));
             service.saveOrUpdateRolloutUser(mobile, null, Integer.valueOf(organisationId));
+
+            String hash = "";
+
+            try {
+                hash = URLGenerationUtil.generateHash(mobile, "mobile", dateString, organisationId);
+            } catch (Exception e) {
+                //throw new RuntimeException(e);
+            }
+
+            MSG91WhatsappUtil.sendGenericFillFormMessageOTP(mobile, null, "sod form", dateString, "4", sodaChecklistUrl + hash);
+
         });
 
         String returnMessage = "";
@@ -308,21 +311,15 @@ public class SODAgentTools {
             service.saveChecklist(checklist);
         }
 
+        String sodaChecklistUrl = "fillsodchecklist?hashtoken=";
+        DateTimeFormatter formatter = DateTimeFormatter.ofPattern("ddMMyyyy-00:00");
+        LocalDate today = LocalDate.now();
+        String dateString = today.format(formatter);
+
         mobileNameMaps.forEach((mobile, name) -> {
             userService.saveOrUpdateStoreUser(mobile, name, Integer.valueOf(organisationId));
             service.saveOrUpdateRolloutUser(mobile, name, Integer.valueOf(organisationId));
-        });
 
-
-        logger.info("fetchLatestActiveChecklist getting called with orgId: " + organisationId);
-
-        String sodaChecklistUrl = "https://opsara.io/fillsodchecklist?hashtoken=";
-
-
-        mobileNameMaps.forEach((mobile, name) -> {
-            DateTimeFormatter formatter = DateTimeFormatter.ofPattern("ddMMyyyy-00:00");
-            LocalDate today = LocalDate.now();
-            String dateString = today.format(formatter);
             String hash = "";
 
             try {
@@ -331,8 +328,16 @@ public class SODAgentTools {
                 //throw new RuntimeException(e);
             }
 
-            MSG91WhatsappUtil.sendGenericFillFormMessageOTP(mobile, name, "sod form", dateString, "4", "fillsodchecklist?hashtoken=" + hash);
+            MSG91WhatsappUtil.sendGenericFillFormMessageOTP(mobile, name, "sod form", dateString, "4", sodaChecklistUrl + hash);
+
         });
+
+
+
+
+
+
+
 
         String returnMessage = "";
         if (!validationMessage.isEmpty()) {
