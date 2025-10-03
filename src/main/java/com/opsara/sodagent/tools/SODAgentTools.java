@@ -6,7 +6,7 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import com.opsara.aaaservice.entities.StoreUser;
 import com.opsara.aaaservice.services.UserService;
 import com.opsara.aaaservice.util.AWSUtil;
-import com.opsara.sodagent.util.MSG91WhatsappUtil;
+import com.opsara.aaaservice.util.MSG91WhatsappUtil;
 import com.opsara.aaaservice.util.URLGenerationUtil;
 import com.opsara.aaaservice.util.WhatsappUtil;
 import com.opsara.sodagent.dto.ProblematicCheckpoint;
@@ -316,6 +316,9 @@ public class SODAgentTools {
         LocalDate today = LocalDate.now();
         String dateString = today.format(formatter);
 
+        DateTimeFormatter outputFormatter = DateTimeFormatter.ofPattern("d MMMM yyyy", Locale.ENGLISH);
+        String formattedDate = today.format(outputFormatter);
+
         mobileNameMaps.forEach((mobile, name) -> {
             userService.saveOrUpdateStoreUser(mobile, name, Integer.valueOf(organisationId));
             service.saveOrUpdateRolloutUser(mobile, name, Integer.valueOf(organisationId));
@@ -323,10 +326,11 @@ public class SODAgentTools {
             String hash = "";
 
             try {
-                hash = URLGenerationUtil.generateHash(mobile, "mobile", dateString, organisationId);
+                hash = URLGenerationUtil.generateHash(mobile, "mobile", formattedDate, organisationId);
             } catch (Exception e) {
                 //throw new RuntimeException(e);
             }
+
 
             String whatsappUtilResponse = MSG91WhatsappUtil.sendGenericFillFormMessageOTP(mobile, name, "sod form", dateString, "4", sodaChecklistUrl + hash);
             logger.info("whatsappUtilResponse " + whatsappUtilResponse);
