@@ -386,24 +386,48 @@ public class SODAgentTools {
 
     @Tool("Reminder for completion. It sends a reminder to stores that have not completed the checklist.")
     public String sendCompletionReminder() {
-
-
-        List<String> allUserCredentials = userService.getAllStoreUserCredentialsByOrgId(Integer.valueOf(organisationId));
-        int totalUsers = allUserCredentials.size();
+        List<StoreUser> allUsers = userService.getAllStoreUsersByOrgId(Integer.valueOf(organisationId));
+        Map<String, String> mobileToName = new HashMap<>();
+        List<String> allUserCredentials = new ArrayList<>();
+        for (StoreUser user : allUsers) {
+            mobileToName.put(user.getMobileNumber(), user.getName());
+            allUserCredentials.add(user.getMobileNumber());
+        }
 
         String today = LocalDateTime.now().format(DateTimeFormatter.ofPattern("ddMMyyyy"));
         List<String> filledUserCredentials = service.getUserChecklistDataFilledForPeriodAndOrg(today, Integer.valueOf(organisationId));
-
         Set<String> filledSet = new HashSet<>(filledUserCredentials);
-        List<String> notFilled = new ArrayList<>();
-        for (String user : allUserCredentials) {
-            if (!filledSet.contains(user)) {
-                notFilled.add(user);
-            }
+
+        List<String> notFilled = allUserCredentials.stream()
+                .filter(mobile -> !filledSet.contains(mobile))
+                .toList();
+
+        if (notFilled.isEmpty()) {
+            return "All stores have already completed the checklist for today. No reminders sent.";
         }
 
-        WhatsappUtil.sendDirectMessage("Request you to fill the SOD checklist today. It takes just 2 minutes. Thank you!");
-        // send whatsapp message to notFilled users
+        logger.info("Sending reminders to not filled users: " + notFilled);
+        String sodaChecklistUrl = "fillsodchecklist?hashtoken=";
+        DateTimeFormatter formatter = DateTimeFormatter.ofPattern("ddMMyyyy-00:00");
+        DateTimeFormatter outputFormatter = DateTimeFormatter.ofPattern("d MMMM yyyy", Locale.ENGLISH);
+        LocalDate date = LocalDate.now();
+        String dateString = date.format(formatter);
+        String formattedDate = date.format(outputFormatter);
+
+        for (String mobile : notFilled) {
+            String name = mobileToName.get(mobile);
+            String hash = "";
+            try {
+                hash = URLGenerationUtil.generateHash(mobile, "mobile", formattedDate, organisationId);
+            } catch (Exception e) {
+                // handle exception
+            }
+            String whatsappUtilResponse = MSG91WhatsappUtil.sendGenericFillFormMessageOTP(
+                    mobile, name, "sod form", dateString, "4", sodaChecklistUrl + hash
+            );
+            logger.info("Reminder whatsappUtilResponse " + whatsappUtilResponse);
+        }
+
         return "Reminder sent to stores that have not completed the checklist. They will receive a WhatsApp message shortly.";
     }
 
