@@ -6,6 +6,7 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import com.opsara.aaaservice.entities.StoreUser;
 import com.opsara.aaaservice.services.UserService;
 import com.opsara.aaaservice.util.AWSUtil;
+import com.opsara.aaaservice.util.GeneralUtil;
 import com.opsara.aaaservice.util.MSG91WhatsappUtil;
 import com.opsara.aaaservice.util.URLGenerationUtil;
 import com.opsara.sodagent.dto.ProblematicCheckpoint;
@@ -239,7 +240,7 @@ public class SODAgentTools {
             return "No mobile numbers provided. Please provide a list of mobile numbers to send the checklist.";
         }
 
-        String validationMessage = SODAGeneralUtil.validateMobileNumbersAndRemoveInvalid(mobileNumbers);
+        String validationMessage = GeneralUtil.validateMobileNumbersAndRemoveInvalid(mobileNumbers);
 
         logger.info("fetchLatestActiveChecklist getting called with orgId: " + organisationId);
         OrganisationChecklist checklist = sodAgentService.fetchLatestActiveChecklist(Integer.valueOf(organisationId));
@@ -300,7 +301,7 @@ public class SODAgentTools {
         }
 
         List<String> listOfMobiles = new ArrayList<>(mobileNameMaps.keySet());
-        String validationMessage = SODAGeneralUtil.validateMobileNumbersAndRemoveInvalid(listOfMobiles);
+        String validationMessage = GeneralUtil.validateMobileNumbersAndRemoveInvalid(listOfMobiles);
         mobileNameMaps.keySet().retainAll(listOfMobiles);
 
 
