@@ -8,9 +8,9 @@ import com.opsara.aaaservice.services.UserService;
 import com.opsara.aaaservice.util.AWSUtil;
 import com.opsara.aaaservice.util.MSG91WhatsappUtil;
 import com.opsara.aaaservice.util.URLGenerationUtil;
-import com.opsara.aaaservice.util.WhatsappUtil;
 import com.opsara.sodagent.dto.ProblematicCheckpoint;
 import com.opsara.sodagent.entities.OrganisationChecklist;
+import com.opsara.sodagent.entities.RolloutUser;
 import com.opsara.sodagent.entities.UserChecklistData;
 import com.opsara.sodagent.services.SODAgentService;
 import com.opsara.sodagent.util.SODAGeneralUtil;
@@ -21,7 +21,6 @@ import org.slf4j.LoggerFactory;
 
 import java.io.ByteArrayInputStream;
 import java.io.InputStream;
-import java.net.URI;
 import java.nio.charset.StandardCharsets;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
@@ -34,18 +33,18 @@ import static com.opsara.sodagent.constants.Constants.*;
 public class SODAgentTools {
 
 
-    private SODAgentService service;
+    private SODAgentService sodAgentService;
     private UserService userService;
     private String organisationId;
     private static final Logger logger = LoggerFactory.getLogger(SODAgentTools.class);
     private static final List<String> CHECK_POINTS = List.of("Have doors been unlocked and the alarm system disabled?", "Have overnight security alerts or messages been reviewed?", "Is the CCTV system functioning and recording?", "Have all floors been swept and mopped?", "Have surfaces, shelves, mannequins, and display units been dusted?", "Are mirrors, glass doors, and fitting room areas clean?", "Have trash bins been emptied and liners replaced?", "Is the air-conditioning or ventilation working and set to a comfortable level?", "Is all store lighting switched on and functioning?", "Is background music playing at the correct volume?", "Are window displays clean, neat, and on theme?", "Are in-store displays set as per the planogram or promotional guidelines?", "Are mannequins dressed and positioned correctly?", "Are shelves and racks fully stocked with no empty gaps?", "Are all garments steamed/ironed and presentable?", "Have overnight deliveries been checked and reconciled with invoices?", "Are new arrivals tagged and priced?", "Are high-margin or new collection items placed in prime locations?", "Are adequate sizes and colors available for fast-moving SKUs?", "Are all POS systems powered on and operational?", "Is the sales software logged in and connected?", "Has the opening cash float been counted and prepared?", "Are receipt printers, barcode scanners, and payment terminals working?", "Has the team briefing been conducted for daily sales targets and promotions?", "Have staff roles and floor coverage been assigned?", "Have important updates from head office been shared?", "Are fire exits checked and clear?", "Are fire extinguishers accessible?", "Have fitting room emergency buttons been tested?", "Are there no tripping hazards on the shop floor?", "Is welcome signage and promotional material placed and visible?", "Are fitting rooms stocked with hangers, hooks, and clean seating?", "Are shopping bags, tissue paper, and gift wraps ready?", "Is hand sanitizer available at entrance and cash counter?");
 
-    public SODAgentTools(SODAgentService service) {
-        this.service = service;
+    public SODAgentTools(SODAgentService sodAgentService) {
+        this.sodAgentService = sodAgentService;
     }
 
-    public SODAgentTools(SODAgentService service, UserService userService, String organisationId) {
-        this.service = service;
+    public SODAgentTools(SODAgentService sodAgentService, UserService userService, String organisationId) {
+        this.sodAgentService = sodAgentService;
         this.userService = userService;
         this.organisationId = organisationId;
     }
@@ -72,7 +71,7 @@ public class SODAgentTools {
         logger.info("Init called .... 3");
 
 
-        OrganisationChecklist existingChecklist = service.fetchLatestActiveChecklist(orgId);
+        OrganisationChecklist existingChecklist = sodAgentService.fetchLatestActiveChecklist(orgId);
         String responseString = "";
 
         String hashtoken = null;
@@ -84,7 +83,7 @@ public class SODAgentTools {
         }
 
         if (existingChecklist == null) {
-            service.saveChecklist(orgId, checkListJson);
+            sodAgentService.saveChecklist(orgId, checkListJson);
             logger.info("service.saveChecklist called  ....");
             String downloadChecklistURL = downloadDefaultChecklist();
 
@@ -153,7 +152,7 @@ public class SODAgentTools {
     public String downloadDefaultChecklist() {
         logger.info("Download Called.");
 
-        OrganisationChecklist existingChecklist = service.fetchLatestActiveChecklist(Integer.valueOf(organisationId));
+        OrganisationChecklist existingChecklist = sodAgentService.fetchLatestActiveChecklist(Integer.valueOf(organisationId));
         if (existingChecklist != null && existingChecklist.getChecklistJson() != null) {
             // Parse checklist_json to extract questions
             ObjectMapper mapper = new ObjectMapper();
@@ -243,14 +242,14 @@ public class SODAgentTools {
         String validationMessage = SODAGeneralUtil.validateMobileNumbersAndRemoveInvalid(mobileNumbers);
 
         logger.info("fetchLatestActiveChecklist getting called with orgId: " + organisationId);
-        OrganisationChecklist checklist = service.fetchLatestActiveChecklist(Integer.valueOf(organisationId));
+        OrganisationChecklist checklist = sodAgentService.fetchLatestActiveChecklist(Integer.valueOf(organisationId));
         if (checklist != null) {
             if (checklist.getStatus() != 2) {
                 checklist.setStatus(3);
             } else {
                 checklist.setStatus(5);
             }
-            service.saveChecklist(checklist);
+            sodAgentService.saveChecklist(checklist);
         }
 
 
@@ -263,7 +262,7 @@ public class SODAgentTools {
 
         mobileNumbers.forEach(mobile -> {
             userService.saveOrUpdateStoreUser(mobile, null, Integer.valueOf(organisationId));
-            service.saveOrUpdateRolloutUser(mobile, null, Integer.valueOf(organisationId));
+            sodAgentService.saveOrUpdateRolloutUser(mobile, null, Integer.valueOf(organisationId));
 
             String hash = "";
 
@@ -292,7 +291,7 @@ public class SODAgentTools {
         return returnMessage;
     }
 
-    @Tool("Rolls out the checklist to provided map of mobile number and user name.")
+    @Tool("Roll out the checklist to one or more users by their names and mobile numbers. Example: 'Roll out to Pavitra at 919632542332' or 'Roll out to Pavitra and Sanskriti at 919632542332 and 919844517222 respectively'.")
     public String rolloutToMobileNameMap(Map<String, String> mobileNameMaps) {
         logger.info("Rollout is called with mobile numbers. mobileNameMaps: " + mobileNameMaps);
 
@@ -305,14 +304,14 @@ public class SODAgentTools {
         mobileNameMaps.keySet().retainAll(listOfMobiles);
 
 
-        OrganisationChecklist checklist = service.fetchLatestActiveChecklist(Integer.valueOf(organisationId));
+        OrganisationChecklist checklist = sodAgentService.fetchLatestActiveChecklist(Integer.valueOf(organisationId));
         if (checklist != null) {
             if (checklist.getStatus() != 2) {
                 checklist.setStatus(3);
             } else {
                 checklist.setStatus(5);
             }
-            service.saveChecklist(checklist);
+            sodAgentService.saveChecklist(checklist);
         }
 
         String sodaChecklistUrl = "fillsodchecklist?hashtoken=";
@@ -325,7 +324,7 @@ public class SODAgentTools {
 
         mobileNameMaps.forEach((mobile, name) -> {
             userService.saveOrUpdateStoreUser(mobile, name, Integer.valueOf(organisationId));
-            service.saveOrUpdateRolloutUser(mobile, name, Integer.valueOf(organisationId));
+            sodAgentService.saveOrUpdateRolloutUser(mobile, name, Integer.valueOf(organisationId));
 
             String hash = "";
 
@@ -362,11 +361,11 @@ public class SODAgentTools {
     @Tool("Returns Completion Status. It tells how many stores out of how many have completed the checklist.")
     public String returnCompletionStatus() {
 
-        List<String> allUserCredentials = userService.getAllStoreUserCredentialsByOrgId(Integer.valueOf(organisationId));
+        List<String> allUserCredentials = sodAgentService.getAllRolloutUserCredentialsByOrgId(Integer.valueOf(organisationId));
         int totalUsers = allUserCredentials.size();
 
         String today = LocalDateTime.now().format(DateTimeFormatter.ofPattern("ddMMyyyy"));
-        List<String> filledUserCredentials = service.getUserChecklistDataFilledForPeriodAndOrg(today, Integer.valueOf(organisationId));
+        List<String> filledUserCredentials = sodAgentService.getUserChecklistDataFilledForPeriodAndOrg(today, Integer.valueOf(organisationId));
 
         Set<String> filledSet = new HashSet<>(filledUserCredentials);
         List<String> notFilled = new ArrayList<>();
@@ -390,16 +389,16 @@ public class SODAgentTools {
 
     @Tool("Reminder for completion. It sends a reminder to stores that have not completed the checklist.")
     public String sendCompletionReminder() {
-        List<StoreUser> allUsers = userService.getAllStoreUsersByOrgId(Integer.valueOf(organisationId));
+        List<RolloutUser> allUsers = sodAgentService.getAllRolloutUsersByOrgId(Integer.valueOf(organisationId));
         Map<String, String> mobileToName = new HashMap<>();
         List<String> allUserCredentials = new ArrayList<>();
-        for (StoreUser user : allUsers) {
+        for (RolloutUser user : allUsers) {
             mobileToName.put(user.getMobileNumber(), user.getName());
             allUserCredentials.add(user.getMobileNumber());
         }
 
         String today = LocalDateTime.now().format(DateTimeFormatter.ofPattern("ddMMyyyy"));
-        List<String> filledUserCredentials = service.getUserChecklistDataFilledForPeriodAndOrg(today, Integer.valueOf(organisationId));
+        List<String> filledUserCredentials = sodAgentService.getUserChecklistDataFilledForPeriodAndOrg(today, Integer.valueOf(organisationId));
         Set<String> filledSet = new HashSet<>(filledUserCredentials);
 
         List<String> notFilled = allUserCredentials.stream()
@@ -437,7 +436,7 @@ public class SODAgentTools {
 
     @Tool("Returns Most Problematic Check Points. It returns the list of most problematic check points based on the checklist filled by stores.")
     public List<ProblematicCheckpoint> giveMostProblematicCheckPoints() {
-        return service.giveMostProblematicCheckPoints(Integer.valueOf(organisationId));
+        return sodAgentService.giveMostProblematicCheckPoints(Integer.valueOf(organisationId));
     }
 
     @Tool("Download Report. It generates a csv file report based on the date range provided and returns a download link.")
@@ -445,7 +444,7 @@ public class SODAgentTools {
         logger.info("Download Report Called with fromDateTime: " + fromDateTime + " toDateTime: " + toDateTime);
 
         // Fetch data
-        List<UserChecklistData> checklistDataList = service.getUserChecklistDataBetweenDatesAndOrg(Integer.valueOf(organisationId), fromDateTime, toDateTime);
+        List<UserChecklistData> checklistDataList = sodAgentService.getUserChecklistDataBetweenDatesAndOrg(Integer.valueOf(organisationId), fromDateTime, toDateTime);
 
         ObjectMapper objectMapper = new ObjectMapper();
 
@@ -517,7 +516,7 @@ public class SODAgentTools {
     @Tool("Skip Edit Checklist. Skips the edit checklist reminder and starts for next stage which is rollout.")
     public void skipEditReminder() {
         logger.info("User chose to skip editing the checklist and proceed with rollout.");
-        service.markChecklistStatusAsTwo(Integer.valueOf(organisationId));
+        sodAgentService.markChecklistStatusAsTwo(Integer.valueOf(organisationId));
 
     }
 
