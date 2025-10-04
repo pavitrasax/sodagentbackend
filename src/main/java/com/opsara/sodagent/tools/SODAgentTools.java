@@ -273,7 +273,11 @@ public class SODAgentTools {
                 //throw new RuntimeException(e);
             }
 
-            String whatsappUtilResponse = MSG91WhatsappUtil.sendGenericFillFormMessageOTP(mobile, null, "sod form", dateString, "4", sodaChecklistUrl + hash);
+
+            DateTimeFormatter outputFormatter = DateTimeFormatter.ofPattern("d MMMM yyyy", Locale.ENGLISH);
+            String formattedDate = today.format(outputFormatter);
+
+            String whatsappUtilResponse = MSG91WhatsappUtil.sendGenericFillFormMessageOTP(mobile, null, "sod form", formattedDate, "4", sodaChecklistUrl + hash);
             logger.info("whatsappUtilResponse " + whatsappUtilResponse);
         });
 
@@ -288,7 +292,7 @@ public class SODAgentTools {
         return returnMessage;
     }
 
-    @Tool("Rolls out the checklist to provided map of mobile numbers and user names.")
+    @Tool("Rolls out the checklist to provided map of mobile number and user name.")
     public String rolloutToMobileNameMap(Map<String, String> mobileNameMaps) {
         logger.info("Rollout is called with mobile numbers. mobileNameMaps: " + mobileNameMaps);
 

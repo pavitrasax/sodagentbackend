@@ -179,7 +179,7 @@ public class SODAgentService {
         RolloutUser existingUser = rolloutUserRepository.findByMobileNumberAndOrgId(mobile, orgId).orElse(null);
         if (existingUser != null) {
             // Just ignore. Do nothing
-            logger.info("found a record. Ignoring insert and returning existing record.");
+            logger.info("found a Roll out User record. Ignoring insert and returning existing record.");
             return existingUser;
         } else {
             RolloutUser rolloutUser = new RolloutUser();
