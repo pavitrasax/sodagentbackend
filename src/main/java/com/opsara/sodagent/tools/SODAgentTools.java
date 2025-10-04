@@ -326,13 +326,13 @@ public class SODAgentTools {
             String hash = "";
 
             try {
-                hash = URLGenerationUtil.generateHash(mobile, "mobile", formattedDate, organisationId);
+                hash = URLGenerationUtil.generateHash(mobile, "mobile", dateString, organisationId);
             } catch (Exception e) {
                 //throw new RuntimeException(e);
             }
 
 
-            String whatsappUtilResponse = MSG91WhatsappUtil.sendGenericFillFormMessageOTP(mobile, name, "sod form", dateString, "4", sodaChecklistUrl + hash);
+            String whatsappUtilResponse = MSG91WhatsappUtil.sendGenericFillFormMessageOTP(mobile, name, "sod form", formattedDate, "4", sodaChecklistUrl + hash);
             logger.info("whatsappUtilResponse " + whatsappUtilResponse);
         });
 
@@ -418,12 +418,12 @@ public class SODAgentTools {
             String name = mobileToName.get(mobile);
             String hash = "";
             try {
-                hash = URLGenerationUtil.generateHash(mobile, "mobile", formattedDate, organisationId);
+                hash = URLGenerationUtil.generateHash(mobile, "mobile", dateString, organisationId);
             } catch (Exception e) {
                 // handle exception
             }
             String whatsappUtilResponse = MSG91WhatsappUtil.sendGenericFillFormMessageOTP(
-                    mobile, name, "sod form", dateString, "4", sodaChecklistUrl + hash
+                    mobile, name, "sod form", formattedDate, "4", sodaChecklistUrl + hash
             );
             logger.info("Reminder whatsappUtilResponse " + whatsappUtilResponse);
         }
