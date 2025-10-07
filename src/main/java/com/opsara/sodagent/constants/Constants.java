@@ -30,7 +30,9 @@ public final class Constants {
             "https://*.replit.dev",
             "https://replit.dev",
             "http://localhost:3000",
-            "https://d83104de-8dc1-4e95-ad1a-f2d62d63f7d6-00-1tq1p0cz1y1el.janeway.replit.dev"
+            "https://d83104de-8dc1-4e95-ad1a-f2d62d63f7d6-00-1tq1p0cz1y1el.janeway.replit.dev",
+            "http://opsara.io.s3-website.ap-south-1.amazonaws.com",
+            "https://staging.d3gbivn0bg8wcs.amplifyapp.com/"
     };
 
 
