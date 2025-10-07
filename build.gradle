@@ -64,6 +64,14 @@ dependencies {
     implementation 'com.googlecode.libphonenumber:libphonenumber:8.13.32'
 
 
+    implementation 'org.apache.poi:poi-ooxml:5.2.3'
+
+    implementation 'org.json:json:20240303'
+
+    implementation("software.amazon.awssdk:sts:2.34.2")
+    implementation("software.amazon.awssdk:s3:2.34.2")
+
+
     implementation name: 'opsara-aaaservice-0.0.1-SNAPSHOT-plain'
 }
 

@@ -1,6 +1,7 @@
 package com.opsara.sodagent.services;
 
 
+import com.opsara.aaaservice.entities.StoreUser;
 import com.opsara.sodagent.entities.RolloutUser;
 import com.opsara.sodagent.repositories.RolloutUserRepository;
 import com.opsara.sodagent.dto.ProblematicCheckpoint;
@@ -179,7 +180,7 @@ public class SODAgentService {
         RolloutUser existingUser = rolloutUserRepository.findByMobileNumberAndOrgId(mobile, orgId).orElse(null);
         if (existingUser != null) {
             // Just ignore. Do nothing
-            logger.info("found a record. Ignoring insert and returning existing record.");
+            logger.info("found a Roll out User record. Ignoring insert and returning existing record.");
             return existingUser;
         } else {
             RolloutUser rolloutUser = new RolloutUser();
@@ -190,6 +191,22 @@ public class SODAgentService {
             return rolloutUserRepository.save(rolloutUser);
         }
     }
+
+    public List<String> getAllRolloutUserCredentialsByOrgId(Integer organisationId) {
+        List<RolloutUser> users = rolloutUserRepository.findByOrgId(organisationId);
+        return users.stream()
+                .map(RolloutUser::getMobileNumber)
+                .toList();
+
+    }
+
+    public List<RolloutUser> getAllRolloutUsersByOrgId(Integer organisationId) {
+        return rolloutUserRepository.findByOrgId(organisationId);
+    }
+
+
+
+
 }
 
 
