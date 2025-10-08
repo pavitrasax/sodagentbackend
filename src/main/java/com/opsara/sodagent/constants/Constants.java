@@ -3,10 +3,10 @@ package com.opsara.sodagent.constants;
 
 public final class Constants {
 
-   public static final String OPENAI_API_KEY = System.getenv("OPENAI_API_KEY");
-   public static final String CDN_BASE_URL = System.getenv("CDN_BASE_URL");
-   public static final String MY_CODE = "SOD";
-    public static final String AWS_BUCKET_NAME = "opsara-sod";
+    public static final String OPENAI_API_KEY = System.getenv("OPENAI_API_KEY");
+    public static final String CDN_BASE_URL = System.getenv("CDN_BASE_URL");
+    public static final String MY_CODE = "SOD";
+    public static final String AWS_BUCKET_NAME = "opsara-sod" + System.getenv("AWS_BUCKET_SUFFIX");
     public static final String OPSARA_WEB_URL = "https://opsara.io";
 
     public static final String[] PUBLIC_ENDPOINTS = {
@@ -32,9 +32,9 @@ public final class Constants {
             "http://localhost:3000",
             "https://d83104de-8dc1-4e95-ad1a-f2d62d63f7d6-00-1tq1p0cz1y1el.janeway.replit.dev",
             "http://opsara.io.s3-website.ap-south-1.amazonaws.com",
-            "https://staging.d3gbivn0bg8wcs.amplifyapp.com/"
+            "https://staging.d3gbivn0bg8wcs.amplifyapp.com/",
+            "https://d3bhwtj11pduq1.cloudfront.net/"
     };
-
 
 
 }
