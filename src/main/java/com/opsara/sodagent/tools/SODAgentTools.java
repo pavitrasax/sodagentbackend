@@ -292,7 +292,7 @@ public class SODAgentTools {
         return returnMessage;
     }
 
-    @Tool("Roll out the checklist to one or more users by their names and mobile numbers. Example: 'Roll out to Pavitra at 919632542332' or 'Roll out to Pavitra and Sanskriti at 919632542332 and 919844517222 respectively'.")
+    @Tool("Roll out the checklist to one or more users by their mobile numbers and name. Example: 'Roll out to Pavitra at 919632542332' or 'Roll out to Pavitra and Sanskriti at 919632542332 and 919844517222 respectively'.")
     public String rolloutToMobileNameMap(Map<String, String> mobileNameMaps) {
         logger.info("Rollout is called with mobile numbers. mobileNameMaps: " + mobileNameMaps);
 
