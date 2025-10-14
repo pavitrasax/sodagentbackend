@@ -1,7 +1,6 @@
 package com.opsara.sodagent.entities;
 
 
-
 import jakarta.persistence.*;
 import lombok.Data;
 
@@ -26,5 +25,16 @@ public class RolloutUser {
     @Column(name = "created_at", nullable = false, updatable = false)
     private LocalDateTime createdAt = LocalDateTime.now();
 
+    public void setMobileNumber(String mobileNumber) {
+        if (mobileNumber != null) {
+            String refined = mobileNumber.trim().replaceFirst("^0+", "");
+            if (!refined.startsWith("+")) {
+                refined = "+" + refined;
+            }
+            this.mobileNumber = refined;
+        } else {
+            this.mobileNumber = null;
+        }
+    }
     // Getters and setters
 }

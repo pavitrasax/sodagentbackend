@@ -177,7 +177,22 @@ public class SODAgentService {
 
 
     public RolloutUser saveOrUpdateRolloutUser(String mobile, String name, Integer orgId) {
-        RolloutUser existingUser = rolloutUserRepository.findByMobileNumberAndOrgId(mobile, orgId).orElse(null);
+
+        if (mobile == null || mobile.trim().isEmpty()) {
+            throw new IllegalArgumentException("Mobile number is required");
+        }
+
+
+        // I am consistantly saving mobile number as +2547xxxxxxx format in DB. So refining input to same format before searching.
+
+        String refined = mobile.trim().replaceFirst("^0+", "");
+        if (!refined.startsWith("+")) {
+            refined = "+" + refined;
+        }
+
+
+        RolloutUser existingUser = rolloutUserRepository.findByMobileNumberAndOrgId(refined, orgId).orElse(null);
+
         if (existingUser != null) {
             // Just ignore. Do nothing
             logger.info("found a Roll out User record. Ignoring insert and returning existing record.");
