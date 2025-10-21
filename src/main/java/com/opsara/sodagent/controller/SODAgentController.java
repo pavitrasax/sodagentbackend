@@ -1,5 +1,6 @@
 package com.opsara.sodagent.controller;
 
+import com.fasterxml.jackson.annotation.JsonProperty;
 import com.fasterxml.jackson.core.type.TypeReference;
 import com.opsara.aaaservice.services.UserService;
 import com.opsara.aaaservice.util.AWSUtil;
@@ -30,6 +31,8 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 
 
 import java.nio.charset.StandardCharsets;
+import java.time.*;
+import java.time.format.DateTimeFormatter;
 import java.util.*;
 
 import com.opsara.sodagent.entities.OrganisationChecklist;
@@ -467,6 +470,89 @@ public class SODAgentController {
         }
     }
 
+    @PostMapping("/gettask")
+    public ResponseEntity<?> getTask(@RequestBody GetTaskRequest request, HttpServletRequest httpRequest) {
+        logger.info("/gettask called with timezone: {}", request != null ? request.getUserMobileTimezone() : "null");
+
+        if (request == null || request.getUserMobileTimezone() == null
+                || request.getUserMobileTimezone().isEmpty()) {
+            return ResponseEntity.badRequest().body(Map.of(
+                    "success", false,
+                    "message", "Missing required fields: userMobileTimezone in body"
+            ));
+        }
+
+        ZoneId zoneId;
+        try {
+            zoneId = ZoneId.of(request.getUserMobileTimezone());
+        } catch (DateTimeException e) {
+            logger.warn("Invalid timezone provided: {}", request.getUserMobileTimezone());
+            return ResponseEntity.badRequest().body(new GetTaskResponse("failure", "Invalid userMobileTimezone", null, null));
+        }
+
+        ZonedDateTime nowInUserZone = ZonedDateTime.now(zoneId);
+        LocalTime cutoff = LocalTime.of(14, 0); // 2:00 PM
+
+        if (nowInUserZone.toLocalTime().isAfter(cutoff)) {
+            // After 2:00 PM in user's timezone -> return the crossed message and nulls for links
+            return ResponseEntity.ok(new GetTaskResponse("success", "time to fill SOD for today is crossed.", null, null));
+        }
+
+        String sodaChecklistUrl = "fillsodchecklist?hashtoken=";
+        DateTimeFormatter formatter = DateTimeFormatter.ofPattern("ddMMyyyy-00:00");
+        LocalDate today = LocalDate.now();
+        String dateString = today.format(formatter);
+
+        DateTimeFormatter outputFormatter = DateTimeFormatter.ofPattern("d MMMM yyyy", Locale.ENGLISH);
+        String formattedDate = today.format(outputFormatter);
+
+        String hash = "";
+
+        String organisationId = (String) httpRequest.getAttribute("organisationId");
+        String userCredentials = (String) httpRequest.getAttribute("userCredentials");
+
+        try {
+            hash = URLGenerationUtil.generateHash(userCredentials, "mobile", dateString, organisationId);
+        } catch (Exception e) {
+            // ignore and continue with empty hash
+        }
+
+        // Calculate remaining time until today's 2:00 PM in user's timezone (rounded up to nearest hour)
+        ZonedDateTime cutoffZdt = ZonedDateTime.of(today, cutoff, zoneId);
+        long secondsLeft = Duration.between(nowInUserZone, cutoffZdt).getSeconds();
+        if (secondsLeft < 0) secondsLeft = 0;
+        long hoursLeft = (secondsLeft + 3599) / 3600; // round up
+        String expiryHoursText = String.valueOf(hoursLeft);
+
+        DateTimeFormatter timeFormatter = DateTimeFormatter.ofPattern("h:mm a", Locale.ENGLISH);
+        String cutoffTimeFormatted = cutoff.format(timeFormatter) + " " + zoneId.toString();
+
+        String text = String.format("Dear User,\nRequest you to fill the SOD form for %s. It takes just 2 minutes.\nThe link will expire in %s hours.\nThank you!",
+                formattedDate, expiryHoursText);
+
+        String oneTimeUrl = sodaChecklistUrl + hash;
+
+        GetTaskResponse response = new GetTaskResponse("success", text, oneTimeUrl, cutoffTimeFormatted);
+        return ResponseEntity.ok(response);
+    }
+
+    @Data
+    @AllArgsConstructor
+    private static class GetTaskResponse {
+        private String status;
+        private String text;
+
+        @JsonProperty("Onetimesignedurl")
+        private String onetimesignedurl;
+
+        @JsonProperty("Expiry-time")
+        private String expiryTime;
+    }
+
+    @Data
+    private static class GetTaskRequest {
+        private String userMobileTimezone;
+    }
 
     @RequestMapping(value = "/sodagent/upload", method = RequestMethod.OPTIONS)
     public ResponseEntity<?> handleOptions() {
