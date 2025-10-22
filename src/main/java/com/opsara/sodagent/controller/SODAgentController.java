@@ -1,5 +1,6 @@
 package com.opsara.sodagent.controller;
 
+import com.fasterxml.jackson.annotation.JsonFormat;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import com.fasterxml.jackson.core.type.TypeReference;
 import com.opsara.aaaservice.services.UserService;
@@ -471,15 +472,14 @@ public class SODAgentController {
     }
 
     @PostMapping("/gettask")
-    public ResponseEntity<?> getTask(@RequestBody GetTaskRequest request, HttpServletRequest httpRequest) {
+    public ResponseEntity<GetTaskResponse> getTask(@RequestBody GetTaskRequest request, HttpServletRequest httpRequest) {
         logger.info("/gettask called with timezone: {}", request != null ? request.getUserMobileTimezone() : "null");
 
         if (request == null || request.getUserMobileTimezone() == null
                 || request.getUserMobileTimezone().isEmpty()) {
-            return ResponseEntity.badRequest().body(Map.of(
-                    "success", false,
-                    "message", "Missing required fields: userMobileTimezone in body"
-            ));
+            return ResponseEntity.badRequest().body(
+                    new GetTaskResponse("false", "Missing required fields: userMobileTimezone in body.", null, null)
+            );
         }
 
         ZoneId zoneId;
@@ -552,6 +552,92 @@ public class SODAgentController {
     @Data
     private static class GetTaskRequest {
         private String userMobileTimezone;
+    }
+
+
+    // java
+    @PostMapping("/getuserchecklistdata")
+    public ResponseEntity<UserChecklistDataResponse> getUserChecklistData(@RequestBody UserChecklistDateRangeRequest request, HttpServletRequest httpRequest) {
+        logger.info("/getuserchecklistdata called with dateRange: from={} to={}",
+                request != null ? request.getFromDate() : "null",
+                request != null ? request.getToDate() : "null");
+
+        String userCredentials = (String) httpRequest.getAttribute("userCredentials");
+        String organisationId = (String) httpRequest.getAttribute("organisationId");
+
+        // Resolve date range defaults
+        LocalDate resolvedToDate;
+        LocalDate resolvedFromDate;
+        if (request == null || request.getFromDate() == null || request.getToDate() == null) {
+            resolvedToDate = LocalDate.now();
+            resolvedFromDate = resolvedToDate.minusWeeks(1);
+        } else {
+            resolvedFromDate = request.getFromDate();
+            resolvedToDate = request.getToDate();
+        }
+
+        List<UserChecklistData> checklistDataList = new ArrayList<>();
+
+        try {
+            // Placeholder logic: populate sample entry (replace with real fetch using resolvedFromDate/resolvedToDate)
+            String dateFilled = resolvedToDate.format(DateTimeFormatter.ofPattern("d MMMM yyyy", Locale.ENGLISH));
+
+            String dateStringForHash = resolvedToDate.format(DateTimeFormatter.ofPattern("ddMMyyyy-00:00"));
+            String hash = "";
+            try {
+                hash = URLGenerationUtil.generateHash(userCredentials == null ? "unknown" : userCredentials, "mobile", dateStringForHash, organisationId == null ? "" : organisationId);
+            } catch (Exception e) {
+                logger.warn("Unable to generate hash for checklist link", e);
+            }
+
+            String link = "/fillsodchecklist?hashtoken=" + hash;
+
+            UserChecklistData sample = new UserChecklistData(dateFilled,
+                    organisationId == null ? "" : organisationId,
+                    "",
+                    link);
+
+            checklistDataList.add(sample);
+        } catch (Exception e) {
+            logger.error("Error building user checklist data", e);
+            return ResponseEntity.ok(new UserChecklistDataResponse("failure", "SOD", "SOD Agent", Collections.emptyList()));
+        }
+
+        UserChecklistDataResponse response = new UserChecklistDataResponse("success", "SOD", "SOD Agent", checklistDataList);
+        return ResponseEntity.ok(response);
+    }
+
+    @Data
+    private static class UserChecklistDateRangeRequest {
+        @JsonFormat(shape = JsonFormat.Shape.STRING, pattern = "yyyy-MM-dd")
+        private LocalDate fromDate;
+
+        @JsonFormat(shape = JsonFormat.Shape.STRING, pattern = "yyyy-MM-dd")
+        private LocalDate toDate;
+    }
+
+    @Data
+    @AllArgsConstructor
+    private static class UserChecklistDataResponse {
+        private String status;
+        private String agentCode;
+        private String agentName;
+
+        @JsonProperty("UserChecklistData")
+        private List<UserChecklistData> userChecklistData;
+    }
+
+    @Data
+    @AllArgsConstructor
+    private static class UserChecklistData {
+        private String dateFilled;
+        private String organisationId;
+
+        @JsonProperty("Organisation Name")
+        private String organisationName;
+
+        @JsonProperty("link")
+        private String link;
     }
 
     @RequestMapping(value = "/sodagent/upload", method = RequestMethod.OPTIONS)

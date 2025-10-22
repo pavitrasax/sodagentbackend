@@ -18,7 +18,9 @@ public final class Constants {
     public static final String[] AUTH_ENDPOINTS = {
             "/sodagent/chat",
             "/sodagent/upload",
-            "/sodagent/initialise"
+            "/sodagent/initialise",
+            "/sodagent/gettask",
+            "/sodagent/getuserchecklistdata"
     };
 
     public static final String[] ALLOWED_ORIGINS = {
