@@ -220,7 +220,12 @@ public class SODAgentService {
     }
 
 
+    // java
+    public List<UserChecklistData> fetchUserChecklistDataBetweenDates(String userCredentials, LocalDateTime fromDateTime, LocalDateTime toDateTime) {
 
+        return userChecklistDataRepository.findByUserCredentialAndFilledForPeriodTsBetween(userCredentials, fromDateTime, toDateTime);
+
+    }
 
 }
 

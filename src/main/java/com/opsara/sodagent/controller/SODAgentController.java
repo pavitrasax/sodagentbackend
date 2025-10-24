@@ -6,6 +6,7 @@ import com.fasterxml.jackson.core.type.TypeReference;
 import com.opsara.aaaservice.services.UserService;
 import com.opsara.aaaservice.util.AWSUtil;
 import com.opsara.aaaservice.util.URLGenerationUtil;
+import com.opsara.sodagent.entities.UserChecklistData;
 import com.opsara.sodagent.services.SODAgentService;
 import com.opsara.sodagent.tools.SODAgentTools;
 import com.opsara.sodagent.util.SODAGeneralUtil;
@@ -555,7 +556,6 @@ public class SODAgentController {
     }
 
 
-    // java
     @PostMapping("/getuserchecklistdata")
     public ResponseEntity<UserChecklistDataResponse> getUserChecklistData(@RequestBody UserChecklistDateRangeRequest request, HttpServletRequest httpRequest) {
         logger.info("/getuserchecklistdata called with dateRange: from={} to={}",
@@ -576,28 +576,38 @@ public class SODAgentController {
             resolvedToDate = request.getToDate();
         }
 
-        List<UserChecklistData> checklistDataList = new ArrayList<>();
+        List<UserChecklistDataDTO> checklistDataList = new ArrayList<>();
 
         try {
-            // Placeholder logic: populate sample entry (replace with real fetch using resolvedFromDate/resolvedToDate)
-            String dateFilled = resolvedToDate.format(DateTimeFormatter.ofPattern("d MMMM yyyy", Locale.ENGLISH));
+            // Convert to inclusive LocalDateTime range (start of fromDate to end of toDate)
+            LocalDateTime fromDateTime = resolvedFromDate.atStartOfDay();
+            LocalDateTime toDateTime = resolvedToDate.atTime(23, 59, 59, 999_999_999);
 
-            String dateStringForHash = resolvedToDate.format(DateTimeFormatter.ofPattern("ddMMyyyy-00:00"));
-            String hash = "";
-            try {
-                hash = URLGenerationUtil.generateHash(userCredentials == null ? "unknown" : userCredentials, "mobile", dateStringForHash, organisationId == null ? "" : organisationId);
-            } catch (Exception e) {
-                logger.warn("Unable to generate hash for checklist link", e);
+            List<UserChecklistData> entities;
+
+                entities = sodagentService.fetchUserChecklistDataBetweenDates(userCredentials, fromDateTime, toDateTime);
+
+            DateTimeFormatter outputFormatter = DateTimeFormatter.ofPattern("d MMMM yyyy", Locale.ENGLISH);
+            DateTimeFormatter hashDateFormatter = DateTimeFormatter.ofPattern("ddMMyyyy-00:00");
+
+            for (UserChecklistData ent : entities) {
+                // Derive filled date from filledForPeriodTs (supporting java.sql.Timestamp or LocalDateTime fields)
+                LocalDate filledDate = ent.getFilledForPeriodTs().toLocalDate();
+                String dateFilled = filledDate != null ? filledDate.format(outputFormatter) : "";
+                Integer oId = ent.getOrganisationChecklist().getOrgId();
+
+                // Generate one time link (use entity user/mobile credential if available else request-level userCredentials)
+                String dateStringForHash = filledDate != null ? filledDate.format(hashDateFormatter) : "";
+                String hash = "";
+                try {
+                    hash = URLGenerationUtil.generateHash(userCredentials, "mobile", dateStringForHash, String.valueOf(oId));
+                } catch (Exception e) {
+                    logger.debug("Unable to generate hash for checklist link", e);
+                }
+                String link = "/fillsodchecklist?hashtoken=" + hash;
+
+                checklistDataList.add(new UserChecklistDataDTO(dateFilled, String.valueOf(oId),link));
             }
-
-            String link = "/fillsodchecklist?hashtoken=" + hash;
-
-            UserChecklistData sample = new UserChecklistData(dateFilled,
-                    organisationId == null ? "" : organisationId,
-                    "",
-                    link);
-
-            checklistDataList.add(sample);
         } catch (Exception e) {
             logger.error("Error building user checklist data", e);
             return ResponseEntity.ok(new UserChecklistDataResponse("failure", "SOD", "SOD Agent", Collections.emptyList()));
@@ -624,17 +634,14 @@ public class SODAgentController {
         private String agentName;
 
         @JsonProperty("UserChecklistData")
-        private List<UserChecklistData> userChecklistData;
+        private List<UserChecklistDataDTO> userChecklistDatumDTOS;
     }
 
     @Data
     @AllArgsConstructor
-    private static class UserChecklistData {
+    private static class UserChecklistDataDTO {
         private String dateFilled;
         private String organisationId;
-
-        @JsonProperty("Organisation Name")
-        private String organisationName;
 
         @JsonProperty("link")
         private String link;

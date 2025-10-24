@@ -16,4 +16,6 @@ public interface UserChecklistDataRepository extends JpaRepository<UserChecklist
             LocalDateTime start,
             LocalDateTime end
     );
+
+    List<UserChecklistData> findByUserCredentialAndFilledForPeriodTsBetween(String userCredentials, LocalDateTime fromDateTime, LocalDateTime toDateTime);
 }
