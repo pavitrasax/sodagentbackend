@@ -5,10 +5,12 @@ import org.springframework.boot.autoconfigure.SpringBootApplication;
 import org.springframework.boot.autoconfigure.domain.EntityScan;
 import org.springframework.context.annotation.ComponentScan;
 import org.springframework.data.jpa.repository.config.EnableJpaRepositories;
+import org.springframework.scheduling.annotation.EnableScheduling;
 
 @EntityScan({"com.opsara.sodagent", "com.opsara.aaaservice.entities"})
 @ComponentScan({"com.opsara.sodagent", "com.opsara.aaaservice.services", "com.opsara.aaaservice.security"})
 @EnableJpaRepositories({"com.opsara.sodagent.repositories", "com.opsara.aaaservice.repositories"})
+@EnableScheduling
 @SpringBootApplication
 public class SodAgentApplication {
 
