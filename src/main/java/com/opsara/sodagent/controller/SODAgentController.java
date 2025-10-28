@@ -265,15 +265,16 @@ public class SODAgentController {
         }
 
         // TODO : In future include timezone also in hashtoken. WHen user is registering then only calculate and store.
-        // For now, lets validate for IST 2 PM cutoff only.
+        // For now, lets validate for IST 2 PM cutoff only. Working code commenting for time being.
 
+        /*
         ZonedDateTime nowInUserZone = ZonedDateTime.now(ZoneId.of("Asia/Kolkata"));
         LocalTime cutoff = LocalTime.of(14, 0); // 2:00 PM
 
         if (nowInUserZone.toLocalTime().isAfter(cutoff)) {
             // After 2:00 PM in user's timezone -> return the crossed message and nulls for links
             return ResponseEntity.badRequest().body("Time to fill SOD for today is crossed.");
-        }
+        }*/
 
         if("email".equals(userCredentialType)) {
             logger.info("admin was trying to fill just to try. Returning with out saving.");
