@@ -100,15 +100,29 @@ public class SODAgentService {
         OrganisationChecklist organisationChecklist = checklistRepository.findById(organisationChecklistId)
                 .orElseThrow(() -> new IllegalArgumentException("OrganisationChecklist not found"));
 
-        UserChecklistData userChecklistData = new UserChecklistData();
-        userChecklistData.setUserCredential(userCredential);
-        userChecklistData.setUserCredentialType(userCredentialType);
-        userChecklistData.setFilledForPeriod(filledForPeriod);
-        userChecklistData.setOrganisationChecklist(organisationChecklist);
-        userChecklistData.setDataJson(dataJson);
-        userChecklistData.setCreatedAt(LocalDateTime.now());
-        userChecklistData.setFilledForPeriodTs(LocalDateTime.parse(filledForPeriod, DateTimeFormatter.ofPattern("ddMMyyyy-HH:mm")));
-        return userChecklistDataRepository.save(userChecklistData);
+
+        var existingOpt = userChecklistDataRepository
+                .findByUserCredentialAndUserCredentialTypeAndFilledForPeriodAndOrganisationChecklist_Id(
+                        userCredential, userCredentialType, filledForPeriod, organisationChecklistId
+                );
+
+        if (existingOpt.isPresent()) {
+            UserChecklistData existing = existingOpt.get();
+            existing.setDataJson(dataJson);
+            return userChecklistDataRepository.save(existing);
+        } else {
+            logger.info("No existing UserChecklistData found. Creating new record.");
+            UserChecklistData userChecklistData = new UserChecklistData();
+            userChecklistData.setUserCredential(userCredential);
+            userChecklistData.setUserCredentialType(userCredentialType);
+            userChecklistData.setFilledForPeriod(filledForPeriod);
+            userChecklistData.setOrganisationChecklist(organisationChecklist);
+            userChecklistData.setDataJson(dataJson);
+            userChecklistData.setCreatedAt(LocalDateTime.now());
+            userChecklistData.setFilledForPeriodTs(LocalDateTime.parse(filledForPeriod, DateTimeFormatter.ofPattern("ddMMyyyy-HH:mm")));
+            return userChecklistDataRepository.save(userChecklistData);
+        }
+
     }
 
     public boolean existsChecklistForOrganisation(Integer orgId) {

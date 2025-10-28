@@ -9,6 +9,7 @@ import org.springframework.data.repository.query.Param;
 
 import java.time.LocalDateTime;
 import java.util.List;
+import java.util.Optional;
 
 public interface UserChecklistDataRepository extends JpaRepository<UserChecklistData, Long> {
     List<UserChecklistData> findByOrganisationChecklist_OrgIdAndFilledForPeriodTsBetween(
@@ -18,4 +19,11 @@ public interface UserChecklistDataRepository extends JpaRepository<UserChecklist
     );
 
     List<UserChecklistData> findByUserCredentialAndFilledForPeriodTsBetween(String userCredentials, LocalDateTime fromDateTime, LocalDateTime toDateTime);
+
+    Optional<UserChecklistData> findByUserCredentialAndUserCredentialTypeAndFilledForPeriodAndOrganisationChecklist_Id(
+            String userCredential,
+            String userCredentialType,
+            String filledForPeriod,
+            Long organisationChecklistId
+    );
 }
