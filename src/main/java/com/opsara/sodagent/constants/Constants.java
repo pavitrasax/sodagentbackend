@@ -12,7 +12,8 @@ public final class Constants {
     public static final String[] PUBLIC_ENDPOINTS = {
             "/sodagent/getuniqueURL",
             "/sodagent/public/fillchecklist",
-            "/sodagent/public/gettemplate"
+            "/sodagent/public/gettemplate",
+            "/sodagent/public/getprefilleddata"
     };
 
     public static final String[] AUTH_ENDPOINTS = {

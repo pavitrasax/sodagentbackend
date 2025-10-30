@@ -431,6 +431,48 @@ public class SODAgentController {
     }
 
 
+    @PostMapping("/public/getprefilleddata")
+    public ResponseEntity<String> getPrefilledData(@RequestBody Map<String, Object> body) {
+
+        String hashtoken = (String) body.get("hashtoken");
+        logger.info("Hashtoken: " + hashtoken);
+
+        String userCredential;
+        String userCredentialType;
+        String filledForPeriod;
+        String orgId;
+
+        try {
+            String[] decryptedValues = URLGenerationUtil.reverseHash(hashtoken);
+            Arrays.stream(decryptedValues).forEach(str -> logger.info("Decrypted Value: " + str));
+            userCredential = decryptedValues[0];
+            userCredentialType = decryptedValues[1];
+            filledForPeriod = decryptedValues[2];
+            orgId = decryptedValues[3];
+        } catch (Exception e) {
+            return ResponseEntity.badRequest().body("Invalid hashtoken");
+        }
+
+
+        Optional<UserChecklistData> ucdOpt = sodagentService.findUserChecklistData(
+                userCredential, userCredentialType, filledForPeriod, Integer.valueOf(orgId));
+
+        if (ucdOpt.isPresent() && ucdOpt.get().getDataJson() != null && !ucdOpt.get().getDataJson().trim().isEmpty()) {
+            String dataJson = ucdOpt.get().getDataJson();
+            return ResponseEntity
+                    .ok()
+                    .contentType(org.springframework.http.MediaType.APPLICATION_JSON)
+                    .body(dataJson);
+        } else {
+            return ResponseEntity
+                    .ok()
+                    .contentType(org.springframework.http.MediaType.APPLICATION_JSON)
+                    .body("{}");
+        }
+    }
+
+
+
     private String downloadDefaultChecklist(String organisationId) {
         logger.info("Download Called.");
 

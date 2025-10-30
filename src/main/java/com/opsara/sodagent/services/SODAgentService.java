@@ -20,6 +20,7 @@ import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
 import java.util.List;
+import java.util.Optional;
 
 
 @Service
@@ -241,6 +242,17 @@ public class SODAgentService {
 
     }
 
+    public Optional<UserChecklistData> findUserChecklistData(String userCredential, String userCredentialType, String filledForPeriod, Integer organisationId) {
+        try {
+            return userChecklistDataRepository
+                    .findFirstByUserCredentialAndUserCredentialTypeAndFilledForPeriodAndOrganisationChecklist_OrgIdOrderByOrganisationChecklist_VersionDescCreatedAtDesc(
+                            userCredential, userCredentialType, filledForPeriod, organisationId
+                    );
+        } catch (Exception e) {
+            logger.error("Error fetching UserChecklistData for userCredential={}, orgId={}", userCredential, organisationId, e);
+            return Optional.empty();
+        }
+    }
 }
 
 

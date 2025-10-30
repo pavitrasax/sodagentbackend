@@ -26,4 +26,12 @@ public interface UserChecklistDataRepository extends JpaRepository<UserChecklist
             String filledForPeriod,
             Long organisationChecklistId
     );
+
+    Optional<UserChecklistData> findFirstByUserCredentialAndUserCredentialTypeAndFilledForPeriodAndOrganisationChecklist_OrgIdOrderByOrganisationChecklist_VersionDescCreatedAtDesc(
+            String userCredential,
+            String userCredentialType,
+            String filledForPeriod,
+            Integer organisationId
+    );
+
 }
