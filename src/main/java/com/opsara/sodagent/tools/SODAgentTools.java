@@ -262,6 +262,7 @@ public class SODAgentTools {
         String dateString = today.format(formatter);
 
         mobileNumbers.forEach(mobile -> {
+            mobile = GeneralUtil.convertMobileNumberToE164Standard(mobile);
             userService.saveOrUpdateStoreUser(mobile, null, Integer.valueOf(organisationId));
             sodAgentService.saveOrUpdateRolloutUser(mobile, null, Integer.valueOf(organisationId));
 
@@ -324,6 +325,7 @@ public class SODAgentTools {
         String formattedDate = today.format(outputFormatter);
 
         mobileNameMaps.forEach((mobile, name) -> {
+            mobile = GeneralUtil.convertMobileNumberToE164Standard(mobile);
             userService.saveOrUpdateStoreUser(mobile, name, Integer.valueOf(organisationId));
             sodAgentService.saveOrUpdateRolloutUser(mobile, name, Integer.valueOf(organisationId));
 
