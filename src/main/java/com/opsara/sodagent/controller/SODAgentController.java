@@ -744,4 +744,60 @@ public class SODAgentController {
         logger.info("OPTIONS preflight request received for /upload");
         return ResponseEntity.ok().build();
     }
+
+
+    /**
+     * Handles the upload of a file , stores it on storage and returns the URL.
+     * Generic method can be used for any file upload and any use case.
+     *
+     * @param file the uploaded checklist file
+     */
+    @PostMapping("/public/justupload")
+    public ResponseEntity<UploadResponse> justFileUpload(
+            @RequestPart("file") MultipartFile file,
+            HttpServletRequest httpRequest) throws Exception {
+        logger.info("Handling file justupload: {}", file.getOriginalFilename());
+        if (file.isEmpty()) {
+            return ResponseEntity.badRequest().body(new UploadResponse(false, "File is empty"));
+        }
+
+
+        String userCredentials = (String) httpRequest.getAttribute("userCredentials");
+        String orgId = (String) httpRequest.getAttribute("organisationId");
+
+        String hashtoken = httpRequest.getParameter("hashtoken"); //(String) body.get("hashtoken");
+
+
+        logger.info("Hashtoken: " + hashtoken);
+
+        boolean isHashtokenValid = hashtoken != null && !hashtoken.isEmpty();
+        try {
+            String[] decryptedValues = URLGenerationUtil.reverseHash(hashtoken);
+            orgId = decryptedValues[3];
+        } catch (Exception e) {
+            isHashtokenValid = false;
+        }
+
+        boolean isValidLoggedinUser = userCredentials != null && !userCredentials.isEmpty();
+
+        if (!isHashtokenValid && !isValidLoggedinUser) {
+            return ResponseEntity.badRequest().body(new UploadResponse(false, "Invalid User"));
+        }
+
+        String originalName = file.getOriginalFilename();
+        String safeName = originalName != null ? originalName.replaceAll("[^a-zA-Z0-9\\.\\-]", "_") : "file";
+        String fileName = orgId + "/uploads/" + UUID.randomUUID() + "_" + safeName;
+
+        String s3Url = AWSUtil.uploadFileToS3(AWS_BUCKET_NAME, fileName, file);
+        // No need to sign url here. Its just a string which would come back. Later when we need to return
+        // URL for display on other screens, we would sign it.
+        Map<String, Object> result = new HashMap<>();
+        result.put("url", s3Url);
+
+        String msg = new ObjectMapper().writerWithDefaultPrettyPrinter().writeValueAsString(result);
+
+        return ResponseEntity.ok(new UploadResponse(true, msg));
+    }
+
+
 }
