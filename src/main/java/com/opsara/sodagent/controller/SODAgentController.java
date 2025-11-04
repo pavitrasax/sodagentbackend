@@ -6,6 +6,7 @@ import com.fasterxml.jackson.core.type.TypeReference;
 import com.opsara.aaaservice.services.UserService;
 import com.opsara.aaaservice.util.AWSUtil;
 import com.opsara.aaaservice.util.URLGenerationUtil;
+import com.opsara.sodagent.entities.RolloutUser;
 import com.opsara.sodagent.entities.UserChecklistData;
 import com.opsara.sodagent.services.SODAgentService;
 import com.opsara.sodagent.tools.SODAgentTools;
@@ -533,7 +534,7 @@ public class SODAgentController {
         if (request == null || request.getUserMobileTimezone() == null
                 || request.getUserMobileTimezone().isEmpty()) {
             return ResponseEntity.badRequest().body(
-                    new GetTaskResponse("false", "Missing required fields: userMobileTimezone in body.", null, null)
+                    new GetTaskResponse("false", "Missing required fields: userMobileTimezone in body.", null)
             );
         }
 
@@ -542,7 +543,7 @@ public class SODAgentController {
             zoneId = ZoneId.of(request.getUserMobileTimezone());
         } catch (DateTimeException e) {
             logger.warn("Invalid timezone provided: {}", request.getUserMobileTimezone());
-            return ResponseEntity.badRequest().body(new GetTaskResponse("failure", "Invalid userMobileTimezone", null, null));
+            return ResponseEntity.badRequest().body(new GetTaskResponse("failure", "Invalid userMobileTimezone", null));
         }
 
         ZonedDateTime nowInUserZone = ZonedDateTime.now(zoneId);
@@ -550,7 +551,7 @@ public class SODAgentController {
 
         if (nowInUserZone.toLocalTime().isAfter(cutoff)) {
             // After 2:00 PM in user's timezone -> return the crossed message and nulls for links
-            return ResponseEntity.ok(new GetTaskResponse("success", "time to fill SOD for today is crossed.", null, null));
+            return ResponseEntity.ok(new GetTaskResponse("success", "time to fill SOD for today is crossed.",  null));
         }
 
         String sodaChecklistUrl = "fillsodchecklist?hashtoken=";
@@ -566,11 +567,8 @@ public class SODAgentController {
         String organisationId = (String) httpRequest.getAttribute("organisationId");
         String userCredentials = (String) httpRequest.getAttribute("userCredentials");
 
-        try {
-            hash = URLGenerationUtil.generateHash(userCredentials, "mobile", dateString, organisationId);
-        } catch (Exception e) {
-            // ignore and continue with empty hash
-        }
+
+
 
         // Calculate remaining time until today's 2:00 PM in user's timezone (rounded up to nearest hour)
         ZonedDateTime cutoffZdt = ZonedDateTime.of(today, cutoff, zoneId);
@@ -585,16 +583,55 @@ public class SODAgentController {
         String text = String.format("Dear User,\nRequest you to fill the SOD form for %s. It takes just 2 minutes.\nThe link will expire in %s hours.\nThank you!",
                 formattedDate, expiryHoursText);
 
-        String oneTimeUrl = sodaChecklistUrl + hash;
 
-        GetTaskResponse response = new GetTaskResponse("success", text, oneTimeUrl, cutoffTimeFormatted);
+        List<RolloutUser> allEntriesForMobileAcrossOrgs = sodagentService.getAllRolloutUsersByMobileNUmber(userCredentials);
+        List<Task> tasks = new ArrayList<>();
+        for (RolloutUser ru : allEntriesForMobileAcrossOrgs) {
+            String ruMobile = null;
+            Integer ruOrgId = null;
+            try {
+                // attempt to read fields from RolloutUser; fall back to request-level values
+                ruMobile = ru.getMobileNumber() != null ? ru.getMobileNumber() : userCredentials;
+            } catch (Exception ignored) {
+                ruMobile = userCredentials;
+            }
+            try {
+                ruOrgId = ru.getOrgId() != null ? ru.getOrgId() : Integer.valueOf(organisationId);
+            } catch (Exception ignored) {
+                ruOrgId = Integer.valueOf(organisationId);
+            }
+
+            String ruHash = "";
+            try {
+                ruHash = URLGenerationUtil.generateHash(ruMobile, "mobile", dateString, String.valueOf(ruOrgId));
+            } catch (Exception e) {
+                logger.debug("Unable to generate hash for rollout user", e);
+            }
+            String ruOneTimeUrl = sodaChecklistUrl + ruHash;
+            tasks.add(new Task(text, ruOneTimeUrl, cutoffTimeFormatted));
+        }
+
+
+        GetTaskResponse response = new GetTaskResponse("success", "", tasks);
         return ResponseEntity.ok(response);
     }
 
+
     @Data
     @AllArgsConstructor
+
     private static class GetTaskResponse {
         private String status;
+        private String text;
+
+        @JsonProperty("Tasks")
+        private List<Task> tasks;
+    }
+
+
+    @Data
+    @AllArgsConstructor
+    private static class Task {
         private String text;
 
         @JsonProperty("Onetimesignedurl")
@@ -603,6 +640,7 @@ public class SODAgentController {
         @JsonProperty("Expiry-time")
         private String expiryTime;
     }
+
 
     @Data
     private static class GetTaskRequest {

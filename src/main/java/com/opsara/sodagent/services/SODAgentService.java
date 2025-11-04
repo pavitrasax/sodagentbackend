@@ -234,6 +234,9 @@ public class SODAgentService {
         return rolloutUserRepository.findByOrgId(organisationId);
     }
 
+    public List<RolloutUser> getAllRolloutUsersByMobileNUmber(String mobileNumber) {
+        return rolloutUserRepository.findByMobileNumber(mobileNumber);
+    }
 
     // java
     public List<UserChecklistData> fetchUserChecklistDataBetweenDates(String userCredentials, LocalDateTime fromDateTime, LocalDateTime toDateTime) {

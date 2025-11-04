@@ -12,4 +12,6 @@ import java.util.Optional;
 public interface RolloutUserRepository extends JpaRepository<RolloutUser, Long> {
     Optional<RolloutUser> findByMobileNumberAndOrgId(String mobileNumber, Integer orgId);// Add custom query methods if needed
     List<RolloutUser> findByOrgId(Integer orgId);
+    List<RolloutUser> findByMobileNumber(String mobile);
+
 }
