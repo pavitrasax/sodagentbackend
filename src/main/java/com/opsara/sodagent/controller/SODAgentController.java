@@ -59,6 +59,10 @@ public class SODAgentController {
     @Autowired
     UserService userService;
 
+
+    @Autowired
+    URLGenerationUtil urlGenerationUtil;
+
     /**
      * Initializes the SOD Agent for the requesting organization.
      * Loads the default checklist template, stores it if not already present,
@@ -77,7 +81,7 @@ public class SODAgentController {
         Integer orgId = Integer.valueOf(organisationId);
         String hashtoken = null;
         try {
-            hashtoken = URLGenerationUtil.generateHash("preview@opsara.io", "email", "01092025-00:00", organisationId);
+            hashtoken = urlGenerationUtil.generateHash("preview@opsara.io", "email", "01092025-00:00", organisationId);
 
         } catch (Exception e) {
             throw new RuntimeException(e);
@@ -252,15 +256,19 @@ public class SODAgentController {
         String userCredentialType = null;
         String filledForPeriod = null;
         String orgId = null;
+        String storeId = null;
 
 
         try {
-            String[] decryptedValues = URLGenerationUtil.reverseHash(hashtoken);
+            String[] decryptedValues = urlGenerationUtil.reverseHash(hashtoken);
             Arrays.stream(decryptedValues).forEach(str -> logger.info("Decrypted Value: " + str));
             userCredential = decryptedValues[0];
             userCredentialType = decryptedValues[1];
             filledForPeriod = decryptedValues[2];
             orgId = decryptedValues[3];
+            if(decryptedValues.length == 5) {
+                storeId = decryptedValues[4];
+            }
         } catch (Exception e) {
             return ResponseEntity.badRequest().body("Invalid hashtoken");
         }
@@ -293,7 +301,7 @@ public class SODAgentController {
             //return ResponseEntity.badRequest().body("Submitted data does not match checklist template");
         }
 
-        sodagentService.saveUserChecklistData(userCredential, userCredentialType, filledForPeriod, checklistEntity.getId(), dataJson);
+        sodagentService.saveUserChecklistData(userCredential, userCredentialType, filledForPeriod, storeId, checklistEntity.getId(), dataJson);
         return ResponseEntity.ok("Information submitted successfully");
     }
 
@@ -376,7 +384,7 @@ public class SODAgentController {
                 .build();
 
         logger.info("OrganisationId: " + organisationId);
-        SODAgentTools tools = new SODAgentTools(sodagentService, userService, organisationId);
+        SODAgentTools tools = new SODAgentTools(urlGenerationUtil, sodagentService, userService, organisationId);
 
         Assistant assistant = AiServices.builder(Assistant.class).chatModel(model).tools(tools).chatMemory(MessageWindowChatMemory.withMaxMessages(10)).build();
         String answer = assistant.chatAndInvoke(query);
@@ -418,7 +426,7 @@ public class SODAgentController {
 
 
         try {
-            String[] decryptedValues = URLGenerationUtil.reverseHash(hashToken);
+            String[] decryptedValues = urlGenerationUtil.reverseHash(hashToken);
             Arrays.stream(decryptedValues).forEach(str -> logger.info("Decrypted Value: " + str));
             orgId = decryptedValues[3];
         } catch (Exception e) {
@@ -444,7 +452,7 @@ public class SODAgentController {
         String orgId;
 
         try {
-            String[] decryptedValues = URLGenerationUtil.reverseHash(hashtoken);
+            String[] decryptedValues = urlGenerationUtil.reverseHash(hashtoken);
             Arrays.stream(decryptedValues).forEach(str -> logger.info("Decrypted Value: " + str));
             userCredential = decryptedValues[0];
             userCredentialType = decryptedValues[1];
@@ -603,7 +611,7 @@ public class SODAgentController {
 
             String ruHash = "";
             try {
-                ruHash = URLGenerationUtil.generateHash(ruMobile, "mobile", dateString, String.valueOf(ruOrgId));
+                ruHash = urlGenerationUtil.generateHash(ruMobile, "mobile", dateString, String.valueOf(ruOrgId));
             } catch (Exception e) {
                 logger.debug("Unable to generate hash for rollout user", e);
             }
@@ -692,7 +700,69 @@ public class SODAgentController {
                 String dateStringForHash = filledDate != null ? filledDate.format(hashDateFormatter) : "";
                 String hash = "";
                 try {
-                    hash = URLGenerationUtil.generateHash(userCredentials, "mobile", dateStringForHash, String.valueOf(oId));
+                    hash = urlGenerationUtil.generateHash(userCredentials, "mobile", dateStringForHash, String.valueOf(oId));
+                } catch (Exception e) {
+                    logger.debug("Unable to generate hash for checklist link", e);
+                }
+                String link = "/fillsodchecklist?hashtoken=" + hash;
+
+                checklistDataList.add(new UserChecklistDataDTO(dateFilled, String.valueOf(oId),link));
+            }
+        } catch (Exception e) {
+            logger.error("Error building user checklist data", e);
+            return ResponseEntity.ok(new UserChecklistDataResponse("failure", "SOD", "SOD Agent", Collections.emptyList()));
+        }
+
+        UserChecklistDataResponse response = new UserChecklistDataResponse("success", "SOD", "SOD Agent", checklistDataList);
+        return ResponseEntity.ok(response);
+    }
+
+
+    @PostMapping("/getalluserschecklistdatarecords")
+    public ResponseEntity<UserChecklistDataResponse> getAllChecklistDataForOrg(@RequestBody UserChecklistDateRangeRequest request, HttpServletRequest httpRequest) {
+        logger.info("/getuserchecklistdata called with dateRange: from={} to={}",
+                request != null ? request.getFromDate() : "null",
+                request != null ? request.getToDate() : "null");
+
+        String userCredentials = (String) httpRequest.getAttribute("userCredentials");
+        String organisationId = (String) httpRequest.getAttribute("organisationId");
+
+        // Resolve date range defaults
+        LocalDate resolvedToDate;
+        LocalDate resolvedFromDate;
+        if (request == null || request.getFromDate() == null || request.getToDate() == null) {
+            resolvedToDate = LocalDate.now();
+            resolvedFromDate = resolvedToDate.minusWeeks(1);
+        } else {
+            resolvedFromDate = request.getFromDate();
+            resolvedToDate = request.getToDate();
+        }
+
+        List<UserChecklistDataDTO> checklistDataList = new ArrayList<>();
+
+        try {
+            // Convert to inclusive LocalDateTime range (start of fromDate to end of toDate)
+            LocalDateTime fromDateTime = resolvedFromDate.atStartOfDay();
+            LocalDateTime toDateTime = resolvedToDate.atTime(23, 59, 59, 999_999_999);
+
+            List<UserChecklistData> entities;
+
+            entities = sodagentService.getUserChecklistDataBetweenDatesAndOrg(Integer.valueOf(organisationId), fromDateTime, toDateTime);
+
+            DateTimeFormatter outputFormatter = DateTimeFormatter.ofPattern("d MMMM yyyy", Locale.ENGLISH);
+            DateTimeFormatter hashDateFormatter = DateTimeFormatter.ofPattern("ddMMyyyy-00:00");
+
+            for (UserChecklistData ent : entities) {
+                // Derive filled date from filledForPeriodTs (supporting java.sql.Timestamp or LocalDateTime fields)
+                LocalDate filledDate = ent.getFilledForPeriodTs().toLocalDate();
+                String dateFilled = filledDate != null ? filledDate.format(outputFormatter) : "";
+                Integer oId = ent.getOrganisationChecklist().getOrgId();
+
+                // Generate one time link (use entity user/mobile credential if available else request-level userCredentials)
+                String dateStringForHash = filledDate != null ? filledDate.format(hashDateFormatter) : "";
+                String hash = "";
+                try {
+                    hash = urlGenerationUtil.generateHash(userCredentials, "mobile", dateStringForHash, String.valueOf(oId));
                 } catch (Exception e) {
                     logger.debug("Unable to generate hash for checklist link", e);
                 }
@@ -772,7 +842,7 @@ public class SODAgentController {
 
         boolean isHashtokenValid = hashtoken != null && !hashtoken.isEmpty();
         try {
-            String[] decryptedValues = URLGenerationUtil.reverseHash(hashtoken);
+            String[] decryptedValues = urlGenerationUtil.reverseHash(hashtoken);
             orgId = decryptedValues[3];
         } catch (Exception e) {
             isHashtokenValid = false;

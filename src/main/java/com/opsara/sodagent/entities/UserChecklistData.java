@@ -34,6 +34,9 @@ public class UserChecklistData {
     @Column(name = "filled_for_period", nullable = false, length = 20)
     private String filledForPeriod;
 
+    @Column(name = "store_id")
+    private Integer storeId;
+
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(
             name = "organisation_checklist_id",

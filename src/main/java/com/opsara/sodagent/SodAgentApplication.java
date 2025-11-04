@@ -8,7 +8,7 @@ import org.springframework.data.jpa.repository.config.EnableJpaRepositories;
 import org.springframework.scheduling.annotation.EnableScheduling;
 
 @EntityScan({"com.opsara.sodagent", "com.opsara.aaaservice.entities"})
-@ComponentScan({"com.opsara.sodagent", "com.opsara.aaaservice.services", "com.opsara.aaaservice.security"})
+@ComponentScan({"com.opsara.sodagent", "com.opsara.aaaservice.services", "com.opsara.aaaservice.security", "com.opsara.aaaservice.util"})
 @EnableJpaRepositories({"com.opsara.sodagent.repositories", "com.opsara.aaaservice.repositories"})
 @EnableScheduling
 @SpringBootApplication

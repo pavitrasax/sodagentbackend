@@ -26,6 +26,7 @@ public class ScheduledTasks {
     private final Logger log = LoggerFactory.getLogger(ScheduledTasks.class);
     private final OrganisationRepository organisationRepository;
     private final RolloutUserRepository rolloutUserRepository;
+    private final URLGenerationUtil urlGenerationUtil;
 
     @PostConstruct
     public void init() {
@@ -57,7 +58,7 @@ public class ScheduledTasks {
                         String hash = "";
                         String mobile = user.getMobileNumber();
                         try {
-                            hash = URLGenerationUtil.generateHash(mobile, "mobile", dateString, String.valueOf(orgId));
+                            hash = urlGenerationUtil.generateHash(mobile, "mobile", dateString, String.valueOf(orgId));
                         } catch (Exception e) {
                             //throw new RuntimeException(e);
                         }
