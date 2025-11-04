@@ -468,10 +468,11 @@ public class SODAgentController {
 
         if (ucdOpt.isPresent() && ucdOpt.get().getDataJson() != null && !ucdOpt.get().getDataJson().trim().isEmpty()) {
             String dataJson = ucdOpt.get().getDataJson();
+            String dataJsonWithSignedUrls = SODAGeneralUtil.replaceUrlsNamedUrlWithSignedUrls(dataJson);
             return ResponseEntity
                     .ok()
                     .contentType(org.springframework.http.MediaType.APPLICATION_JSON)
-                    .body(dataJson);
+                    .body(dataJsonWithSignedUrls);
         } else {
             return ResponseEntity
                     .ok()
