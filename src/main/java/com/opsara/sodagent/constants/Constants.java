@@ -27,6 +27,7 @@ public final class Constants {
     };
 
     public static final String[] ALLOWED_ORIGINS = {
+            "http://localhost",
             "http://localhost:3001",
             "https://opsara.io",
             "https://www.opsara.io",
