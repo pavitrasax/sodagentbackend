@@ -707,7 +707,7 @@ public class SODAgentController {
                 }
                 String link = "/fillsodchecklist?hashtoken=" + hash;
 
-                checklistDataList.add(new UserChecklistDataDTO(dateFilled, String.valueOf(oId),link));
+                checklistDataList.add(new UserChecklistDataDTO(dateFilled, String.valueOf(oId),ent.getUserCredential(), String.valueOf(ent.getStoreId()), link));
             }
         } catch (Exception e) {
             logger.error("Error building user checklist data", e);
@@ -769,7 +769,7 @@ public class SODAgentController {
                 }
                 String link = "/fillsodchecklist?hashtoken=" + hash;
 
-                checklistDataList.add(new UserChecklistDataDTO(dateFilled, String.valueOf(oId),link));
+                checklistDataList.add(new UserChecklistDataDTO(dateFilled, String.valueOf(oId),ent.getUserCredential(), String.valueOf(ent.getStoreId()), link));
             }
         } catch (Exception e) {
             logger.error("Error building user checklist data", e);
@@ -805,6 +805,8 @@ public class SODAgentController {
     private static class UserChecklistDataDTO {
         private String dateFilled;
         private String organisationId;
+        private String userCredential;
+        private String storeId;
 
         @JsonProperty("link")
         private String link;

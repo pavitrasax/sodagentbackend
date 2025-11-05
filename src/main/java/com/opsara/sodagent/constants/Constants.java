@@ -22,7 +22,8 @@ public final class Constants {
             "/sodagent/upload",
             "/sodagent/initialise",
             "/sodagent/gettask",
-            "/sodagent/getuserchecklistdata"
+            "/sodagent/getuserchecklistdata",
+            "/sodagent/getalluserschecklistdatarecords"
     };
 
     public static final String[] ALLOWED_ORIGINS = {
