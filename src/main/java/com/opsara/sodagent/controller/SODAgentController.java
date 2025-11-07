@@ -557,11 +557,7 @@ public class SODAgentController {
 
         ZonedDateTime nowInUserZone = ZonedDateTime.now(zoneId);
         LocalTime cutoff = LocalTime.of(14, 0); // 2:00 PM
-
-        if (nowInUserZone.toLocalTime().isAfter(cutoff)) {
-            // After 2:00 PM in user's timezone -> return the crossed message and nulls for links
-            return ResponseEntity.ok(new GetTaskResponse("success", "time to fill SOD for today is crossed.",  null));
-        }
+        LocalTime startoff = LocalTime.of(10, 0); // 10:00 AM
 
         String sodaChecklistUrl = "fillsodchecklist?hashtoken=";
         DateTimeFormatter formatter = DateTimeFormatter.ofPattern("ddMMyyyy-00:00");
@@ -588,27 +584,23 @@ public class SODAgentController {
 
         DateTimeFormatter timeFormatter = DateTimeFormatter.ofPattern("h:mm a", Locale.ENGLISH);
         String cutoffTimeFormatted = cutoff.format(timeFormatter) + " " + zoneId.toString();
+        String startoffTimeFormatted = startoff.format(timeFormatter) + " " + zoneId.toString();
 
         String text = String.format("Dear User,\nRequest you to fill the SOD form for %s. It takes just 2 minutes.\nThe link will expire in %s hours.\nThank you!",
                 formattedDate, expiryHoursText);
 
 
         List<RolloutUser> allEntriesForMobileAcrossOrgs = sodagentService.getAllRolloutUsersByMobileNUmber(userCredentials);
+
+        // minusDays (1) and plusDays(1) to ensure we get today's checklist data regardless which timezone server is running and which timezone user is in.
+        List<UserChecklistData> listOfAlreadyFilleDataforToday = sodagentService.fetchUserChecklistDataBetweenDates(userCredentials, LocalDateTime.now().minusDays(1), LocalDateTime.now().plusDays(1));
         List<Task> tasks = new ArrayList<>();
         for (RolloutUser ru : allEntriesForMobileAcrossOrgs) {
             String ruMobile = null;
             Integer ruOrgId = null;
-            try {
-                // attempt to read fields from RolloutUser; fall back to request-level values
-                ruMobile = ru.getMobileNumber() != null ? ru.getMobileNumber() : userCredentials;
-            } catch (Exception ignored) {
-                ruMobile = userCredentials;
-            }
-            try {
-                ruOrgId = ru.getOrgId() != null ? ru.getOrgId() : Integer.valueOf(organisationId);
-            } catch (Exception ignored) {
-                ruOrgId = Integer.valueOf(organisationId);
-            }
+
+            ruOrgId = ru.getOrgId();
+            ruMobile = ru.getMobileNumber();
 
             String ruHash = "";
             try {
@@ -617,7 +609,36 @@ public class SODAgentController {
                 logger.debug("Unable to generate hash for rollout user", e);
             }
             String ruOneTimeUrl = sodaChecklistUrl + ruHash;
-            tasks.add(new Task(text, ruOneTimeUrl, cutoffTimeFormatted));
+
+            // Calculate ChecklistStatus, If already filled for today mark as SUBMITTED. for that find if listOfAlreadyFilleDataforToday had a record which has OrganisationChecklist.orgId == ruOrgId
+            // For others, if current time is before startoff mark as UPCOMING, if between startoff and cutoff mark as OPEN, else EXPIRED
+            // Determine if already filled for this organisation
+            ChecklistStatus status;
+            boolean alreadyFilled = false;
+            for (UserChecklistData ucd : listOfAlreadyFilleDataforToday) {
+                if (ucd.getOrganisationChecklist() != null) {
+                    Integer filledOrgId = ucd.getOrganisationChecklist().getOrgId();
+                    if (Objects.equals(filledOrgId, ruOrgId)) {
+                        alreadyFilled = true;
+                        break;
+                    }
+                }
+            }
+
+            if (alreadyFilled) {
+                status = ChecklistStatus.SUBMITTED;
+            } else {
+                LocalTime nowTime = nowInUserZone.toLocalTime();
+                if (nowTime.isBefore(startoff)) {
+                    status = ChecklistStatus.UPCOMING;
+                } else if (!nowTime.isAfter(cutoff)) { // between startoff and cutoff (inclusive cutoff)
+                    status = ChecklistStatus.OPEN;
+                } else {
+                    status = ChecklistStatus.EXPIRED;
+                }
+            }
+
+            tasks.add(new Task(status, text, ruOneTimeUrl, cutoffTimeFormatted, startoffTimeFormatted));
         }
 
 
@@ -637,10 +658,17 @@ public class SODAgentController {
         private List<Task> tasks;
     }
 
+     enum ChecklistStatus {
+        UPCOMING,
+        OPEN,
+        EXPIRED,
+        SUBMITTED
+    }
 
     @Data
     @AllArgsConstructor
     private static class Task {
+        private ChecklistStatus status;
         private String text;
 
         @JsonProperty("Onetimesignedurl")
@@ -648,6 +676,9 @@ public class SODAgentController {
 
         @JsonProperty("Expiry-time")
         private String expiryTime;
+
+        @JsonProperty("Start-time")
+        private String startTime;
     }
 
 
