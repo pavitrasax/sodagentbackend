@@ -225,7 +225,7 @@ public class SODAgentService {
 
     public Optional<UserChecklistData> findUserChecklistData(String userCredential, String userCredentialType, String filledForPeriod, Integer organisationId) {
         try {
-            return userChecklistDataRepository.findFirstByUserCredentialAndUserCredentialTypeAndFilledForPeriodAndOrganisationChecklist_OrgIdOrderByOrganisationChecklist_VersionDescCreatedAtDesc(userCredential, userCredentialType, filledForPeriod, organisationId);
+            return userChecklistDataRepository.findLatestForUserAndPeriodAndOrg(userCredential, userCredentialType, filledForPeriod, organisationId);
         } catch (Exception e) {
             logger.error("Error fetching UserChecklistData for userCredential={}, orgId={}", userCredential, organisationId, e);
             return Optional.empty();

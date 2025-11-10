@@ -27,11 +27,21 @@ public interface UserChecklistDataRepository extends JpaRepository<UserChecklist
             Long organisationChecklistId
     );
 
-    Optional<UserChecklistData> findFirstByUserCredentialAndUserCredentialTypeAndFilledForPeriodAndOrganisationChecklist_OrgIdOrderByOrganisationChecklist_VersionDescCreatedAtDesc(
-            String userCredential,
-            String userCredentialType,
-            String filledForPeriod,
-            Integer organisationId
+    @Query(value = "SELECT u.* " +
+            "FROM sodagent.user_checklist_data u " +
+            "JOIN sodagent.organisation_checklist oc ON u.organisation_checklist_id = oc.id " +
+            "WHERE u.user_credential = :userCredential " +
+            "  AND u.user_credential_type = :userCredentialType " +
+            "  AND u.filled_for_period = :filledForPeriod " +
+            "  AND oc.org_id = :orgId " +
+            "ORDER BY oc.version DESC, oc.created_at DESC " +
+            "LIMIT 1",
+            nativeQuery = true)
+    Optional<UserChecklistData> findLatestForUserAndPeriodAndOrg(
+            @Param("userCredential") String userCredential,
+            @Param("userCredentialType") String userCredentialType,
+            @Param("filledForPeriod") String filledForPeriod,
+            @Param("orgId") Integer orgId
     );
 
 }
