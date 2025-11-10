@@ -783,18 +783,25 @@ public class SODAgentController {
 
             DateTimeFormatter outputFormatter = DateTimeFormatter.ofPattern("d MMMM yyyy", Locale.ENGLISH);
             DateTimeFormatter hashDateFormatter = DateTimeFormatter.ofPattern("ddMMyyyy-00:00");
+            DateTimeFormatter inputDatePart = DateTimeFormatter.ofPattern("ddMMyyyy");
 
             for (UserChecklistData ent : entities) {
                 // Derive filled date from filledForPeriodTs (supporting java.sql.Timestamp or LocalDateTime fields)
                 LocalDate filledDate = ent.getFilledForPeriodTs().toLocalDate();
-                String dateFilled = filledDate != null ? filledDate.format(outputFormatter) : "";
+
+                String dateStringForHash = ent.getFilledForPeriod();
+                String[] parts = dateStringForHash.split("-",2);
+                String dateFilled = parts.length > 0 ? parts[0] : dateStringForHash;
+                LocalDate ld = LocalDate.parse(dateFilled, inputDatePart);
+                dateFilled = ld.format(outputFormatter);
+
+                logger.info("dateStringForHash, dateFilled {} {} ", dateStringForHash, dateFilled);
                 Integer oId = ent.getOrganisationChecklist().getOrgId();
 
-                // Generate one time link (use entity user/mobile credential if available else request-level userCredentials)
-                String dateStringForHash = filledDate != null ? filledDate.format(hashDateFormatter) : "";
+
                 String hash = "";
                 try {
-                    hash = urlGenerationUtil.generateHash(userCredentials, "mobile", dateStringForHash, String.valueOf(oId));
+                    hash = urlGenerationUtil.generateHash(ent.getUserCredential(), ent.getUserCredentialType(), dateStringForHash, String.valueOf(oId));
                 } catch (Exception e) {
                     logger.debug("Unable to generate hash for checklist link", e);
                 }
