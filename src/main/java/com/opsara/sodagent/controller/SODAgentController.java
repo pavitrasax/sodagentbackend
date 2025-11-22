@@ -11,6 +11,7 @@ import com.opsara.sodagent.entities.UserChecklistData;
 import com.opsara.sodagent.services.SODAgentService;
 import com.opsara.sodagent.tools.SODAgentTools;
 import com.opsara.sodagent.util.SODAGeneralUtil;
+import jakarta.persistence.criteria.CriteriaBuilder;
 import jakarta.servlet.http.HttpServletRequest;
 import lombok.AllArgsConstructor;
 import lombok.Data;
@@ -638,7 +639,7 @@ public class SODAgentController {
                 }
             }
 
-            tasks.add(new Task(status, text, ruOneTimeUrl, cutoffTimeFormatted, startoffTimeFormatted));
+            tasks.add(new Task(status, text, ruOrgId, dateString, ruOneTimeUrl, cutoffTimeFormatted, startoffTimeFormatted));
         }
 
 
@@ -670,6 +671,8 @@ public class SODAgentController {
     private static class Task {
         private ChecklistStatus status;
         private String text;
+        private Integer orgId;
+        private String fillForDate;
 
         @JsonProperty("Onetimesignedurl")
         private String onetimesignedurl;
