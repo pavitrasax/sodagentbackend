@@ -73,6 +73,12 @@ dependencies {
 
 
     implementation name: 'opsara-aaaservice-0.0.1-SNAPSHOT-plain'
+
+    implementation 'com.datastax.astra:astra-db-java:1.5.3'
+    implementation 'com.datastax.astra:astra-sdk:1.2.9'
+
+    implementation 'org.apache.commons:commons-csv:1.10.0'
+
 }
 
 tasks.named('test') {

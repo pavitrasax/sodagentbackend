@@ -63,7 +63,7 @@ public class ScheduledTasks {
                             //throw new RuntimeException(e);
                         }
 
-                        String whatsappUtilResponse = MSG91WhatsappUtil.sendGenericFillFormMessageOTP(user.getMobileNumber(), user.getName(), "sod form", formattedDate, "4", sodaChecklistUrl + hash);
+                        String whatsappUtilResponse = MSG91WhatsappUtil.getInstance().sendGenericFillFormMessageOTP(user.getMobileNumber(), user.getName(), "sod form", formattedDate, "4", sodaChecklistUrl + hash);
 
                     } catch (Exception ex) {
                         log.error("Failed to send WhatsApp to user id={} orgId={}", user.getMobileNumber(), orgId, ex);

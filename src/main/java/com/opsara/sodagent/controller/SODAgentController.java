@@ -168,17 +168,7 @@ public class SODAgentController {
 
         return ResponseEntity.ok(new AgentResponse(true, mainExecution(request.getMessage(), organisationId, userCredentials)));
     }
-    @Data
-    private static class AgentRequest {
-        private String message;
-    }
 
-    @Data
-    @AllArgsConstructor
-    private static class AgentResponse {
-        private boolean success;
-        private String answer;
-    }
 
     /**
      * Handles the upload of a checklist file for an organization.
@@ -208,12 +198,6 @@ public class SODAgentController {
         responseMessage += "Or you can say \"Roll out to every one\". It would roll out to all store managers already existing in database.\n";
         UploadResponse response = new UploadResponse(true, responseMessage);
         return ResponseEntity.ok(response);
-    }
-    @Data
-    @AllArgsConstructor
-    public static class UploadResponse {
-        private boolean success;
-        private String message;
     }
 
 
@@ -306,99 +290,8 @@ public class SODAgentController {
         return ResponseEntity.ok("Information submitted successfully");
     }
 
-    /**
-     * Validates the submitted checklist data against the checklist template.
-     * Ensures all questions in the data exist in the template and answers are valid.
-     *
-     * @param dataJson      the JSON string of submitted checklist data
-     * @param templateJson  the JSON string of the checklist template
-     * @return true if data is valid against the template, false otherwise
-     */
-    private boolean validateAgainstTemplate(String dataJson, String templateJson) {
-        try {
-
-            logger.info("validateAgainstTemplate : \n " + templateJson);
-            logger.info("data : \n " + dataJson);
-            ObjectMapper mapper = new ObjectMapper();
-
-            // Parse template checklist
-            Map<String, Object> templateMap = mapper.readValue(templateJson, Map.class);
-            List<String> templateQuestions = (List<String>) templateMap.get("checklist");
-
-            // Parse dataJson
-            Map<String, Object> dataMap = mapper.readValue(dataJson, Map.class);
-
-            for (String question : dataMap.keySet()) {
-                // 1. Question must exist in template
-                if (!templateQuestions.contains(question)) {
-                    return false;
-                }
-                // 2. Answer must be Yes, No, or Not Applicable
-                Object answer = dataMap.get(question);
-                if (!(answer instanceof String)) {
-                    return false;
-                }
-                String ans = ((String) answer).trim();
-                if (!ans.equals("Yes") && !ans.equals("No") && !ans.equals("Not Applicable")) {
-                    return false;
-                }
-            }
-            return true;
-        } catch (Exception e) {
-            return false;
-        }
-    }
-
-    /**
-     * Parses the provided input stream containing checklist items,
-     * generates a JSON string * with a "checklist" array, and returns it.
-     * If an error occurs, returns an empty string. * *
-     *
-     * @param inputStream the input stream to read checklist items from
-     * @return a pretty-printed JSON string with the checklist, or an empty string on error
-     *
-     */
-    private static String parseGenerateJSONStoreAgainstOrg(InputStream inputStream) {
-        try {
-            List<String> checklist = new ArrayList<>();
-            try (BufferedReader reader = new BufferedReader(new InputStreamReader(inputStream))) {
-                String line;
-                while ((line = reader.readLine()) != null) {
-                    line = line.trim();
-                    if (!line.isEmpty()) {
-                        checklist.add(line);
-                    }
-                }
-            }
-            ObjectMapper mapper = new ObjectMapper();
-            return mapper.writerWithDefaultPrettyPrinter().writeValueAsString(Map.of("checklist", checklist));
-        } catch (Exception e) {
-            return "";
-        }
-    }
 
 
-    private String mainExecution(String query, String organisationId, String userCredentials) {
-
-        // TODO : play with various models and check impact on accuracy etc. And understand cost also.
-        OpenAiChatModel model = OpenAiChatModel.builder().apiKey(OPENAI_API_KEY).modelName("gpt-4o-mini")
-                .build();
-
-        logger.info("OrganisationId: " + organisationId);
-        SODAgentTools tools = new SODAgentTools(urlGenerationUtil, sodagentService, userService, organisationId);
-
-        Assistant assistant = AiServices.builder(Assistant.class).chatModel(model).tools(tools).chatMemory(MessageWindowChatMemory.withMaxMessages(10)).build();
-        String answer = assistant.chatAndInvoke(query);
-
-        return answer;
-    }
-
-
-
-
-    interface Assistant {
-        String chatAndInvoke(String userMessage);
-    }
 
 
 
@@ -484,58 +377,6 @@ public class SODAgentController {
 
 
 
-    private String downloadDefaultChecklist(String organisationId) {
-        logger.info("Download Called.");
-
-        OrganisationChecklist existingChecklist = sodagentService.fetchLatestActiveChecklist(Integer.valueOf(organisationId));
-        if (existingChecklist != null && existingChecklist.getChecklistJson() != null) {
-            // Parse checklist_json to extract questions
-            ObjectMapper mapper = new ObjectMapper();
-            List<String> questions = new ArrayList<>();
-            try {
-                Map<String, Object> checklistMap = mapper.readValue(existingChecklist.getChecklistJson(), new TypeReference<Map<String, Object>>() {
-                });
-                questions = (List<String>) checklistMap.getOrDefault("checklist", Collections.emptyList());
-            } catch (Exception e) {
-                logger.error("Error parsing checklist_json", e);
-                // fallback to hardcoded file
-                String fileName = "SODChecks.txt";
-                String completeUrl = CDN_BASE_URL + fileName;
-                String downLoadLink = "<a href=\"" + completeUrl + "\" target=\"_blank\">Download SODChecks.txt</a>";
-                return downLoadLink;
-            }
-
-            // Generate CSV content
-            StringBuilder csv = new StringBuilder();
-            for (String q : questions) {
-                csv.append(q.replaceAll(",", " ")).append("\n");
-            }
-            String csvContent = csv.toString();
-
-            // Upload to S3
-            String fileName = "Checklist_" + organisationId + ".csv";
-            InputStream csvStream = new ByteArrayInputStream(csvContent.getBytes(StandardCharsets.UTF_8));
-            try {
-                AWSUtil.uploadFileToS3(AWS_BUCKET_NAME, fileName, csvStream, csvContent.getBytes(StandardCharsets.UTF_8).length, "text/csv");
-                String signedS3Url = AWSUtil.generatePresignedUrl(AWS_BUCKET_NAME, fileName);
-                return "<a href=\"" + signedS3Url + "\" target=\"_blank\">Download Checklist CSV</a>";
-            } catch (Exception e) {
-                logger.error("Error uploading checklist CSV to S3", e);
-                // fallback to hardcoded file
-                String fallbackFileName = "SODChecks.txt";
-                String fallbackUrl = CDN_BASE_URL + fallbackFileName;
-                String fallbackLink = "<a href=\"" + fallbackUrl + "\" target=\"_blank\">Download SODChecks.txt</a>";
-                return fallbackLink;
-            }
-
-        } else {
-            // fallback to hardcoded file
-            String fileName = "SODChecks.txt";
-            String completeUrl = CDN_BASE_URL + fileName;
-            String downLoadLink = "<a href=\"" + completeUrl + "\" target=\"_blank\">Download SODChecks.txt</a>";
-            return downLoadLink;
-        }
-    }
 
     @PostMapping("/gettask")
     public ResponseEntity<GetTaskResponse> getTask(@RequestBody GetTaskRequest request, HttpServletRequest httpRequest) {
@@ -645,49 +486,6 @@ public class SODAgentController {
 
         GetTaskResponse response = new GetTaskResponse("success", "", tasks);
         return ResponseEntity.ok(response);
-    }
-
-
-    @Data
-    @AllArgsConstructor
-
-    private static class GetTaskResponse {
-        private String status;
-        private String text;
-
-        @JsonProperty("Tasks")
-        private List<Task> tasks;
-    }
-
-     enum ChecklistStatus {
-        UPCOMING,
-        OPEN,
-        EXPIRED,
-        SUBMITTED
-    }
-
-    @Data
-    @AllArgsConstructor
-    private static class Task {
-        private ChecklistStatus status;
-        private String text;
-        private Integer orgId;
-        private String fillForDate;
-
-        @JsonProperty("Onetimesignedurl")
-        private String onetimesignedurl;
-
-        @JsonProperty("Expiry-time")
-        private String expiryTime;
-
-        @JsonProperty("Start-time")
-        private String startTime;
-    }
-
-
-    @Data
-    private static class GetTaskRequest {
-        private String userMobileTimezone;
     }
 
 
@@ -821,37 +619,7 @@ public class SODAgentController {
         return ResponseEntity.ok(response);
     }
 
-    @Data
-    private static class UserChecklistDateRangeRequest {
-        @JsonFormat(shape = JsonFormat.Shape.STRING, pattern = "yyyy-MM-dd")
-        private LocalDate fromDate;
 
-        @JsonFormat(shape = JsonFormat.Shape.STRING, pattern = "yyyy-MM-dd")
-        private LocalDate toDate;
-    }
-
-    @Data
-    @AllArgsConstructor
-    private static class UserChecklistDataResponse {
-        private String status;
-        private String agentCode;
-        private String agentName;
-
-        @JsonProperty("UserChecklistData")
-        private List<UserChecklistDataDTO> userChecklistDatumDTOS;
-    }
-
-    @Data
-    @AllArgsConstructor
-    private static class UserChecklistDataDTO {
-        private String dateFilled;
-        private String organisationId;
-        private String userCredential;
-        private String storeId;
-
-        @JsonProperty("link")
-        private String link;
-    }
 
     @RequestMapping(value = "/sodagent/upload", method = RequestMethod.OPTIONS)
     public ResponseEntity<?> handleOptions() {
@@ -902,7 +670,7 @@ public class SODAgentController {
         String safeName = originalName != null ? originalName.replaceAll("[^a-zA-Z0-9\\.\\-]", "_") : "file";
         String fileName = orgId + "/uploads/" + UUID.randomUUID() + "_" + safeName;
 
-        String s3Url = AWSUtil.uploadFileToS3(AWS_BUCKET_NAME, fileName, file);
+        String s3Url = AWSUtil.getInstance().uploadFileToS3(AWS_BUCKET_NAME, fileName, file);
         // No need to sign url here. Its just a string which would come back. Later when we need to return
         // URL for display on other screens, we would sign it.
         Map<String, Object> result = new HashMap<>();
@@ -913,5 +681,252 @@ public class SODAgentController {
         return ResponseEntity.ok(new UploadResponse(true, msg));
     }
 
+
+    /**
+     * Parses the provided input stream containing checklist items,
+     * generates a JSON string * with a "checklist" array, and returns it.
+     * If an error occurs, returns an empty string. * *
+     *
+     * @param inputStream the input stream to read checklist items from
+     * @return a pretty-printed JSON string with the checklist, or an empty string on error
+     *
+     */
+    private static String parseGenerateJSONStoreAgainstOrg(InputStream inputStream) {
+        try {
+            List<String> checklist = new ArrayList<>();
+            try (BufferedReader reader = new BufferedReader(new InputStreamReader(inputStream))) {
+                String line;
+                while ((line = reader.readLine()) != null) {
+                    line = line.trim();
+                    if (!line.isEmpty()) {
+                        checklist.add(line);
+                    }
+                }
+            }
+            ObjectMapper mapper = new ObjectMapper();
+            return mapper.writerWithDefaultPrettyPrinter().writeValueAsString(Map.of("checklist", checklist));
+        } catch (Exception e) {
+            return "";
+        }
+    }
+
+
+
+    /**
+     * Validates the submitted checklist data against the checklist template.
+     * Ensures all questions in the data exist in the template and answers are valid.
+     *
+     * @param dataJson      the JSON string of submitted checklist data
+     * @param templateJson  the JSON string of the checklist template
+     * @return true if data is valid against the template, false otherwise
+     */
+    private boolean validateAgainstTemplate(String dataJson, String templateJson) {
+        try {
+
+            logger.info("validateAgainstTemplate : \n " + templateJson);
+            logger.info("data : \n " + dataJson);
+            ObjectMapper mapper = new ObjectMapper();
+
+            // Parse template checklist
+            Map<String, Object> templateMap = mapper.readValue(templateJson, Map.class);
+            List<String> templateQuestions = (List<String>) templateMap.get("checklist");
+
+            // Parse dataJson
+            Map<String, Object> dataMap = mapper.readValue(dataJson, Map.class);
+
+            for (String question : dataMap.keySet()) {
+                // 1. Question must exist in template
+                if (!templateQuestions.contains(question)) {
+                    return false;
+                }
+                // 2. Answer must be Yes, No, or Not Applicable
+                Object answer = dataMap.get(question);
+                if (!(answer instanceof String)) {
+                    return false;
+                }
+                String ans = ((String) answer).trim();
+                if (!ans.equals("Yes") && !ans.equals("No") && !ans.equals("Not Applicable")) {
+                    return false;
+                }
+            }
+            return true;
+        } catch (Exception e) {
+            return false;
+        }
+    }
+
+
+
+    private String mainExecution(String query, String organisationId, String userCredentials) {
+
+        // TODO : play with various models and check impact on accuracy etc. And understand cost also.
+        OpenAiChatModel model = OpenAiChatModel.builder().apiKey(OPENAI_API_KEY).modelName("gpt-4o-mini")
+                .build();
+
+        logger.info("OrganisationId: " + organisationId);
+        SODAgentTools tools = new SODAgentTools(urlGenerationUtil, sodagentService, userService, organisationId);
+
+        Assistant assistant = AiServices.builder(Assistant.class).chatModel(model).tools(tools).chatMemory(MessageWindowChatMemory.withMaxMessages(10)).build();
+        String answer = assistant.chatAndInvoke(query);
+
+        return answer;
+    }
+
+
+    private String downloadDefaultChecklist(String organisationId) {
+        logger.info("Download Called.");
+
+        OrganisationChecklist existingChecklist = sodagentService.fetchLatestActiveChecklist(Integer.valueOf(organisationId));
+        if (existingChecklist != null && existingChecklist.getChecklistJson() != null) {
+            // Parse checklist_json to extract questions
+            ObjectMapper mapper = new ObjectMapper();
+            List<String> questions = new ArrayList<>();
+            try {
+                Map<String, Object> checklistMap = mapper.readValue(existingChecklist.getChecklistJson(), new TypeReference<Map<String, Object>>() {
+                });
+                questions = (List<String>) checklistMap.getOrDefault("checklist", Collections.emptyList());
+            } catch (Exception e) {
+                logger.error("Error parsing checklist_json", e);
+                // fallback to hardcoded file
+                String fileName = "SODChecks.txt";
+                String completeUrl = CDN_BASE_URL + fileName;
+                String downLoadLink = "<a href=\"" + completeUrl + "\" target=\"_blank\">Download SODChecks.txt</a>";
+                return downLoadLink;
+            }
+
+            // Generate CSV content
+            StringBuilder csv = new StringBuilder();
+            for (String q : questions) {
+                csv.append(q.replaceAll(",", " ")).append("\n");
+            }
+            String csvContent = csv.toString();
+
+            // Upload to S3
+            String fileName = "Checklist_" + organisationId + ".csv";
+            InputStream csvStream = new ByteArrayInputStream(csvContent.getBytes(StandardCharsets.UTF_8));
+            try {
+                AWSUtil.getInstance().uploadFileToS3(AWS_BUCKET_NAME, fileName, csvStream, csvContent.getBytes(StandardCharsets.UTF_8).length, "text/csv");
+                String signedS3Url = AWSUtil.getInstance().generatePresignedUrl(AWS_BUCKET_NAME, fileName);
+                return "<a href=\"" + signedS3Url + "\" target=\"_blank\">Download Checklist CSV</a>";
+            } catch (Exception e) {
+                logger.error("Error uploading checklist CSV to S3", e);
+                // fallback to hardcoded file
+                String fallbackFileName = "SODChecks.txt";
+                String fallbackUrl = CDN_BASE_URL + fallbackFileName;
+                String fallbackLink = "<a href=\"" + fallbackUrl + "\" target=\"_blank\">Download SODChecks.txt</a>";
+                return fallbackLink;
+            }
+
+        } else {
+            // fallback to hardcoded file
+            String fileName = "SODChecks.txt";
+            String completeUrl = CDN_BASE_URL + fileName;
+            String downLoadLink = "<a href=\"" + completeUrl + "\" target=\"_blank\">Download SODChecks.txt</a>";
+            return downLoadLink;
+        }
+    }
+
+    @Data
+    private static class AgentRequest {
+        private String message;
+    }
+
+    @Data
+    @AllArgsConstructor
+    private static class AgentResponse {
+        private boolean success;
+        private String answer;
+    }
+
+    @Data
+    @AllArgsConstructor
+    public static class UploadResponse {
+        private boolean success;
+        private String message;
+    }
+
+
+
+
+    interface Assistant {
+        String chatAndInvoke(String userMessage);
+    }
+
+
+
+    @Data
+    @AllArgsConstructor
+
+    private static class GetTaskResponse {
+        private String status;
+        private String text;
+
+        @JsonProperty("Tasks")
+        private List<Task> tasks;
+    }
+
+    enum ChecklistStatus {
+        UPCOMING,
+        OPEN,
+        EXPIRED,
+        SUBMITTED
+    }
+
+    @Data
+    @AllArgsConstructor
+    private static class Task {
+        private ChecklistStatus status;
+        private String text;
+        private Integer orgId;
+        private String fillForDate;
+
+        @JsonProperty("Onetimesignedurl")
+        private String onetimesignedurl;
+
+        @JsonProperty("Expiry-time")
+        private String expiryTime;
+
+        @JsonProperty("Start-time")
+        private String startTime;
+    }
+
+
+    @Data
+    private static class GetTaskRequest {
+        private String userMobileTimezone;
+    }
+
+
+    @Data
+    private static class UserChecklistDateRangeRequest {
+        @JsonFormat(shape = JsonFormat.Shape.STRING, pattern = "yyyy-MM-dd")
+        private LocalDate fromDate;
+
+        @JsonFormat(shape = JsonFormat.Shape.STRING, pattern = "yyyy-MM-dd")
+        private LocalDate toDate;
+    }
+
+    @Data
+    @AllArgsConstructor
+    private static class UserChecklistDataResponse {
+        private String status;
+        private String agentCode;
+        private String agentName;
+
+        @JsonProperty("UserChecklistData")
+        private List<UserChecklistDataDTO> userChecklistDatumDTOS;
+    }
+
+    @Data
+    @AllArgsConstructor
+    private static class UserChecklistDataDTO {
+        private String dateFilled;
+        private String organisationId;
+        private String userCredential;
+        private String storeId;
+
+        @JsonProperty("link")
+        private String link;
+    }
 
 }

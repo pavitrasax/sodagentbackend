@@ -98,7 +98,7 @@ public class SODAGeneralUtil {
 
         String key = originalUrl.substring(keyStartIdx + 1);
         try {
-            return AWSUtil.generatePresignedUrl(AWS_BUCKET_NAME, key);
+            return AWSUtil.getInstance().generatePresignedUrl(AWS_BUCKET_NAME, key);
         } catch (Exception e) {
             logger.warn("Failed to generate presigned URL for key={} : {}", key, e.getMessage());
             return originalUrl;

@@ -186,8 +186,8 @@ public class SODAgentTools {
             InputStream csvStream = new ByteArrayInputStream(csvContent.getBytes(StandardCharsets.UTF_8));
 
             try {
-                AWSUtil.uploadFileToS3(AWS_BUCKET_NAME, fileName, csvStream, csvContent.getBytes(StandardCharsets.UTF_8).length, "text/csv");
-                String preSignedS3Url = AWSUtil.generatePresignedUrl(AWS_BUCKET_NAME, fileName); // 24 hours expiry
+                AWSUtil.getInstance().uploadFileToS3(AWS_BUCKET_NAME, fileName, csvStream, csvContent.getBytes(StandardCharsets.UTF_8).length, "text/csv");
+                String preSignedS3Url = AWSUtil.getInstance().generatePresignedUrl(AWS_BUCKET_NAME, fileName); // 24 hours expiry
                 return "<a href=\"" + preSignedS3Url + "\" target=\"_blank\">Download Checklist CSV</a>";
             } catch (Exception e) {
                 logger.error("Error uploading checklist CSV to S3", e);
@@ -242,7 +242,7 @@ public class SODAgentTools {
             return "No mobile numbers provided. Please provide a list of mobile numbers to send the checklist.";
         }
 
-        String validationMessage = GeneralUtil.validateMobileNumbersAndRemoveInvalid(mobileNumbers);
+        String validationMessage = GeneralUtil.getInstance().validateMobileNumbersAndRemoveInvalid(mobileNumbers);
 
         logger.info("fetchLatestActiveChecklist getting called with orgId: " + organisationId);
         OrganisationChecklist checklist = sodAgentService.fetchLatestActiveChecklist(Integer.valueOf(organisationId));
@@ -264,7 +264,7 @@ public class SODAgentTools {
         String dateString = today.format(formatter);
 
         mobileNumbers.forEach(mobile -> {
-            mobile = GeneralUtil.convertMobileNumberToE164Standard(mobile);
+            mobile = GeneralUtil.getInstance().convertMobileNumberToE164Standard(mobile);
             userService.saveOrUpdateStoreUser(mobile, null, Integer.valueOf(organisationId));
             sodAgentService.saveOrUpdateRolloutUser(mobile, null, Integer.valueOf(organisationId));
 
@@ -280,7 +280,7 @@ public class SODAgentTools {
             DateTimeFormatter outputFormatter = DateTimeFormatter.ofPattern("d MMMM yyyy", Locale.ENGLISH);
             String formattedDate = today.format(outputFormatter);
 
-            String whatsappUtilResponse = MSG91WhatsappUtil.sendGenericFillFormMessageOTP(mobile, null, "sod form", formattedDate, "4", sodaChecklistUrl + hash);
+            String whatsappUtilResponse = MSG91WhatsappUtil.getInstance().sendGenericFillFormMessageOTP(mobile, null, "sod form", formattedDate, "4", sodaChecklistUrl + hash);
             logger.info("whatsappUtilResponse " + whatsappUtilResponse);
         });
 
@@ -304,7 +304,7 @@ public class SODAgentTools {
         }
 
         List<String> listOfMobiles = new ArrayList<>(mobileNameMaps.keySet());
-        String validationMessage = GeneralUtil.validateMobileNumbersAndRemoveInvalid(listOfMobiles);
+        String validationMessage = GeneralUtil.getInstance().validateMobileNumbersAndRemoveInvalid(listOfMobiles);
         mobileNameMaps.keySet().retainAll(listOfMobiles);
 
 
@@ -327,7 +327,7 @@ public class SODAgentTools {
         String formattedDate = today.format(outputFormatter);
 
         mobileNameMaps.forEach((mobile, name) -> {
-            mobile = GeneralUtil.convertMobileNumberToE164Standard(mobile);
+            mobile = GeneralUtil.getInstance().convertMobileNumberToE164Standard(mobile);
             userService.saveOrUpdateStoreUser(mobile, name, Integer.valueOf(organisationId));
             sodAgentService.saveOrUpdateRolloutUser(mobile, name, Integer.valueOf(organisationId));
 
@@ -340,7 +340,7 @@ public class SODAgentTools {
             }
 
 
-            String whatsappUtilResponse = MSG91WhatsappUtil.sendGenericFillFormMessageOTP(mobile, name, "sod form", formattedDate, "4", sodaChecklistUrl + hash);
+            String whatsappUtilResponse = MSG91WhatsappUtil.getInstance().sendGenericFillFormMessageOTP(mobile, name, "sod form", formattedDate, "4", sodaChecklistUrl + hash);
             logger.info("whatsappUtilResponse " + whatsappUtilResponse);
         });
 
@@ -430,7 +430,7 @@ public class SODAgentTools {
             } catch (Exception e) {
                 // handle exception
             }
-            String whatsappUtilResponse = MSG91WhatsappUtil.sendGenericFillFormMessageOTP(
+            String whatsappUtilResponse = MSG91WhatsappUtil.getInstance().sendGenericFillFormMessageOTP(
                     mobile, name, "sod form", formattedDate, "4", sodaChecklistUrl + hash
             );
             logger.info("Reminder whatsappUtilResponse " + whatsappUtilResponse);
@@ -508,8 +508,8 @@ public class SODAgentTools {
 
 
         try {
-            String s3Url =  AWSUtil.uploadFileToS3(AWS_BUCKET_NAME, fileName, csvStream, csvContent.getBytes(StandardCharsets.UTF_8).length, "text/csv");
-            String preSignedUrl = AWSUtil.generatePresignedUrl(AWS_BUCKET_NAME, fileName);
+            String s3Url =  AWSUtil.getInstance().uploadFileToS3(AWS_BUCKET_NAME, fileName, csvStream, csvContent.getBytes(StandardCharsets.UTF_8).length, "text/csv");
+            String preSignedUrl = AWSUtil.getInstance().generatePresignedUrl(AWS_BUCKET_NAME, fileName);
             return "Download your report here: " + preSignedUrl;
         } catch (Exception e) {
             logger.error("Error uploading report to S3", e);
