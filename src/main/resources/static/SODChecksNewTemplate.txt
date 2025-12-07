@@ -1,0 +1,14 @@
+# This is an easy to use format to configure a dynamic SOD checks form for a retail store.
+# Each line represents a different check.
+# Please make sure not to change the ID of any existing question. This is important for data consistency.
+# You can remove areas by deleting the corresponding line.
+# You can add new areas by appending new lines at the end of the file. Make sure to use unique Ids and Names for new areas.
+# question-mandatory is a key word , write Y or N as third parameter.
+# attachment-needed is a key word , write Y or N or M as third parameter. N=No, Y=Yes, M=Yes and Mandatory.
+# id,name,question-mandatory [N/Y], attachment-needed [N/Y/M]
+q1,Have doors been unlocked and the alarm system disabled?,Y,N
+q2,Is the CCTV system functioning and recording?,N,M
+q3,Have all floors been swept and mopped?,Y,Y
+q4,Is background music playing at the correct volume?,N,N
+q5,Are all POS systems powered on and operational?,Y,N
+q6,Are fitting rooms stocked with hangers, hooks, and clean seating?,N,N

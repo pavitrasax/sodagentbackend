@@ -43,6 +43,9 @@ import com.opsara.sodagent.entities.OrganisationChecklist;
 
 
 import static com.opsara.sodagent.constants.Constants.*;
+import static com.opsara.sodagent.constants.DefaultChecklist.DEFAULT_CHECKLIST_JSON;
+import static com.opsara.sodagent.util.SODAGeneralUtil.downloadDefaultChecklist;
+import static com.opsara.sodagent.util.SODAGeneralUtil.parseGenerateJSONStoreAgainstOrg;
 
 
 @RestController
@@ -51,8 +54,6 @@ import static com.opsara.sodagent.constants.Constants.*;
 public class SODAgentController {
 
     private static final Logger logger = LoggerFactory.getLogger(SODAgentController.class);
-    private static final InputStream inputStream = SODAgentController.class.getClassLoader().getResourceAsStream("static/SODChecks.txt");
-    private static final String checkListJson = parseGenerateJSONStoreAgainstOrg(inputStream);
 
     @Autowired
     SODAgentService sodagentService;
@@ -91,9 +92,9 @@ public class SODAgentController {
         OrganisationChecklist existingChecklist = sodagentService.fetchLatestActiveChecklist(orgId);
         String responseString = "";
         if (existingChecklist == null) {
-            sodagentService.saveChecklist(orgId, checkListJson);
+            OrganisationChecklist saved = sodagentService.saveChecklist(orgId, DEFAULT_CHECKLIST_JSON);
             logger.info("Checklist is Stored in Database successfully.");
-            String downloadChecklistURL = downloadDefaultChecklist(organisationId);
+            String downloadChecklistURL = downloadDefaultChecklist(saved);
 
 
             responseString = SODAGeneralUtil.generateInitMessage(downloadChecklistURL, hashtoken);
@@ -102,7 +103,7 @@ public class SODAgentController {
             switch (status) {
                 case 1:
                     responseString += new String("SOD Agent is already initialised with default checklist. Click here to download , edit and upload the checklist as per your choice. \n");
-                    responseString += downloadDefaultChecklist(organisationId) + "\n";
+                    responseString += downloadDefaultChecklist(existingChecklist) + "\n";
                     responseString += "If you do not want to edit and want to stay with default checklist, please let us know. I will not remind you again. \n";
                     responseString += "You can always preview how it looks to store managers here. \n";
                     responseString += "<a href=\"" + "/fillsodchecklist?hashtoken=" + hashtoken + "\" target=\"_blank\">View Checklist</a>" + " \n";
@@ -113,12 +114,12 @@ public class SODAgentController {
                     responseString += "You can always preview how it looks to store managers here. \n";
                     responseString += "<a href=\"" + "/fillsodchecklist?hashtoken=" + hashtoken + "\" target=\"_blank\">View Checklist</a>" + " \n";
                     responseString += "You can also download the checklist you uploaded here. \n";
-                    responseString += downloadDefaultChecklist(organisationId) + "\n";
+                    responseString += downloadDefaultChecklist(existingChecklist) + "\n";
                     break;
                 case 3:
                     responseString += new String("Your default checklist is already rolled out to few users. How ever I recommend you see it once , may be you want to edit and upload again.\n");
                     responseString += "Click here to download , edit and upload \n";
-                    responseString += downloadDefaultChecklist(organisationId) + "\n";
+                    responseString += downloadDefaultChecklist(existingChecklist) + "\n";
                     responseString += "If you do not want to edit and want to stay with default checklist, please let us know. I will not remind you again. \n";
                     responseString += "You can always preview how it looks to store managers here. \n";
                     responseString += "<a href=\"" + "/fillsodchecklist?hashtoken=" + hashtoken + "\" target=\"_blank\">View Checklist</a>" + " \n";
@@ -129,7 +130,7 @@ public class SODAgentController {
                     responseString += "You can always preview how it looks to store managers here. \n";
                     responseString += "<a href=\"" + "/fillsodchecklist?hashtoken=" + hashtoken + "\" target=\"_blank\">View Checklist</a>" + " \n";
                     responseString += "You can also download the checklist you uploaded here. \n";
-                    responseString += downloadDefaultChecklist(organisationId) + "\n";
+                    responseString += downloadDefaultChecklist(existingChecklist) + "\n";
 
                     break;
                 default:
@@ -137,7 +138,7 @@ public class SODAgentController {
                     responseString += "You can always preview how it looks to store managers here. \n";
                     responseString += "<a href=\"" + "/fillsodchecklist?hashtoken=" + hashtoken + "\" target=\"_blank\">View Checklist</a>" + " \n";
                     responseString += "You can also download the checklist you uploaded here. \n";
-                    responseString += downloadDefaultChecklist(organisationId) + "\n";
+                    responseString += downloadDefaultChecklist(existingChecklist) + "\n";
 
             }
         }
@@ -282,8 +283,7 @@ public class SODAgentController {
         boolean isValid = validateAgainstTemplate(dataJson, checklistTemplateJson);
 
         if (!isValid) {
-            // TODO : check the logic of validateAgainstTemplate and once properly tested start throwing following exception.
-            //return ResponseEntity.badRequest().body("Submitted data does not match checklist template");
+            return ResponseEntity.badRequest().body("Submitted data does not match checklist template");
         }
 
         sodagentService.saveUserChecklistData(userCredential, userCredentialType, filledForPeriod, storeId, checklistEntity.getId(), dataJson);
@@ -362,7 +362,7 @@ public class SODAgentController {
 
         if (ucdOpt.isPresent() && ucdOpt.get().getDataJson() != null && !ucdOpt.get().getDataJson().trim().isEmpty()) {
             String dataJson = ucdOpt.get().getDataJson();
-            String dataJsonWithSignedUrls = SODAGeneralUtil.replaceUrlsNamedUrlWithSignedUrls(dataJson);
+            String dataJsonWithSignedUrls = AWSUtil.getInstance().replaceUrlsNamedUrlWithSignedUrls(dataJson,AWS_BUCKET_NAME);
             return ResponseEntity
                     .ok()
                     .contentType(org.springframework.http.MediaType.APPLICATION_JSON)
@@ -682,35 +682,6 @@ public class SODAgentController {
     }
 
 
-    /**
-     * Parses the provided input stream containing checklist items,
-     * generates a JSON string * with a "checklist" array, and returns it.
-     * If an error occurs, returns an empty string. * *
-     *
-     * @param inputStream the input stream to read checklist items from
-     * @return a pretty-printed JSON string with the checklist, or an empty string on error
-     *
-     */
-    private static String parseGenerateJSONStoreAgainstOrg(InputStream inputStream) {
-        try {
-            List<String> checklist = new ArrayList<>();
-            try (BufferedReader reader = new BufferedReader(new InputStreamReader(inputStream))) {
-                String line;
-                while ((line = reader.readLine()) != null) {
-                    line = line.trim();
-                    if (!line.isEmpty()) {
-                        checklist.add(line);
-                    }
-                }
-            }
-            ObjectMapper mapper = new ObjectMapper();
-            return mapper.writerWithDefaultPrettyPrinter().writeValueAsString(Map.of("checklist", checklist));
-        } catch (Exception e) {
-            return "";
-        }
-    }
-
-
 
     /**
      * Validates the submitted checklist data against the checklist template.
@@ -721,38 +692,8 @@ public class SODAgentController {
      * @return true if data is valid against the template, false otherwise
      */
     private boolean validateAgainstTemplate(String dataJson, String templateJson) {
-        try {
-
-            logger.info("validateAgainstTemplate : \n " + templateJson);
-            logger.info("data : \n " + dataJson);
-            ObjectMapper mapper = new ObjectMapper();
-
-            // Parse template checklist
-            Map<String, Object> templateMap = mapper.readValue(templateJson, Map.class);
-            List<String> templateQuestions = (List<String>) templateMap.get("checklist");
-
-            // Parse dataJson
-            Map<String, Object> dataMap = mapper.readValue(dataJson, Map.class);
-
-            for (String question : dataMap.keySet()) {
-                // 1. Question must exist in template
-                if (!templateQuestions.contains(question)) {
-                    return false;
-                }
-                // 2. Answer must be Yes, No, or Not Applicable
-                Object answer = dataMap.get(question);
-                if (!(answer instanceof String)) {
-                    return false;
-                }
-                String ans = ((String) answer).trim();
-                if (!ans.equals("Yes") && !ans.equals("No") && !ans.equals("Not Applicable")) {
-                    return false;
-                }
-            }
-            return true;
-        } catch (Exception e) {
-            return false;
-        }
+        // TODO : Implement proper validation logic here.
+        return true;
     }
 
 
@@ -773,58 +714,6 @@ public class SODAgentController {
     }
 
 
-    private String downloadDefaultChecklist(String organisationId) {
-        logger.info("Download Called.");
-
-        OrganisationChecklist existingChecklist = sodagentService.fetchLatestActiveChecklist(Integer.valueOf(organisationId));
-        if (existingChecklist != null && existingChecklist.getChecklistJson() != null) {
-            // Parse checklist_json to extract questions
-            ObjectMapper mapper = new ObjectMapper();
-            List<String> questions = new ArrayList<>();
-            try {
-                Map<String, Object> checklistMap = mapper.readValue(existingChecklist.getChecklistJson(), new TypeReference<Map<String, Object>>() {
-                });
-                questions = (List<String>) checklistMap.getOrDefault("checklist", Collections.emptyList());
-            } catch (Exception e) {
-                logger.error("Error parsing checklist_json", e);
-                // fallback to hardcoded file
-                String fileName = "SODChecks.txt";
-                String completeUrl = CDN_BASE_URL + fileName;
-                String downLoadLink = "<a href=\"" + completeUrl + "\" target=\"_blank\">Download SODChecks.txt</a>";
-                return downLoadLink;
-            }
-
-            // Generate CSV content
-            StringBuilder csv = new StringBuilder();
-            for (String q : questions) {
-                csv.append(q.replaceAll(",", " ")).append("\n");
-            }
-            String csvContent = csv.toString();
-
-            // Upload to S3
-            String fileName = "Checklist_" + organisationId + ".csv";
-            InputStream csvStream = new ByteArrayInputStream(csvContent.getBytes(StandardCharsets.UTF_8));
-            try {
-                AWSUtil.getInstance().uploadFileToS3(AWS_BUCKET_NAME, fileName, csvStream, csvContent.getBytes(StandardCharsets.UTF_8).length, "text/csv");
-                String signedS3Url = AWSUtil.getInstance().generatePresignedUrl(AWS_BUCKET_NAME, fileName);
-                return "<a href=\"" + signedS3Url + "\" target=\"_blank\">Download Checklist CSV</a>";
-            } catch (Exception e) {
-                logger.error("Error uploading checklist CSV to S3", e);
-                // fallback to hardcoded file
-                String fallbackFileName = "SODChecks.txt";
-                String fallbackUrl = CDN_BASE_URL + fallbackFileName;
-                String fallbackLink = "<a href=\"" + fallbackUrl + "\" target=\"_blank\">Download SODChecks.txt</a>";
-                return fallbackLink;
-            }
-
-        } else {
-            // fallback to hardcoded file
-            String fileName = "SODChecks.txt";
-            String completeUrl = CDN_BASE_URL + fileName;
-            String downLoadLink = "<a href=\"" + completeUrl + "\" target=\"_blank\">Download SODChecks.txt</a>";
-            return downLoadLink;
-        }
-    }
 
     @Data
     private static class AgentRequest {

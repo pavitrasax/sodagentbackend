@@ -156,54 +156,7 @@ public class SODAgentTools {
         logger.info("Download Called.");
 
         OrganisationChecklist existingChecklist = sodAgentService.fetchLatestActiveChecklist(Integer.valueOf(organisationId));
-        if (existingChecklist != null && existingChecklist.getChecklistJson() != null) {
-            // Parse checklist_json to extract questions
-            ObjectMapper mapper = new ObjectMapper();
-            List<String> questions = new ArrayList<>();
-            try {
-                Map<String, Object> checklistMap = mapper.readValue(existingChecklist.getChecklistJson(), new TypeReference<Map<String, Object>>() {
-                });
-                questions = (List<String>) checklistMap.getOrDefault("checklist", Collections.emptyList());
-            } catch (Exception e) {
-                logger.error("Error parsing checklist_json", e);
-                // fallback to hardcoded file
-                String fileName = "SODChecks.txt";
-                String completeUrl = CDN_BASE_URL + fileName;
-                String downLoadLink = "<a href=\"" + completeUrl + "\" target=\"_blank\">Download SODChecks.txt</a>";
-                return downLoadLink;
-            }
-
-            // Generate CSV content
-            StringBuilder csv = new StringBuilder();
-            for (String q : questions) {
-                csv.append(q.replaceAll(",", " ")).append("\n");
-            }
-            String csvContent = csv.toString();
-
-            // Upload to S3
-            String timestamp = LocalDateTime.now().format(DateTimeFormatter.ofPattern("yyyyMMdd_HHmmss"));
-            String fileName = organisationId + "/Checklist_" + organisationId + "_" + timestamp + ".csv";
-            InputStream csvStream = new ByteArrayInputStream(csvContent.getBytes(StandardCharsets.UTF_8));
-
-            try {
-                AWSUtil.getInstance().uploadFileToS3(AWS_BUCKET_NAME, fileName, csvStream, csvContent.getBytes(StandardCharsets.UTF_8).length, "text/csv");
-                String preSignedS3Url = AWSUtil.getInstance().generatePresignedUrl(AWS_BUCKET_NAME, fileName); // 24 hours expiry
-                return "<a href=\"" + preSignedS3Url + "\" target=\"_blank\">Download Checklist CSV</a>";
-            } catch (Exception e) {
-                logger.error("Error uploading checklist CSV to S3", e);
-                // fallback to hardcoded file
-                String fallbackFileName = "SODChecks.txt";
-                String fallbackUrl = CDN_BASE_URL + fallbackFileName;
-                String fallbackLink = "<a href=\"" + fallbackUrl + "\" target=\"_blank\">Download SODChecks.txt</a>";
-                return fallbackLink;
-            }
-        } else {
-            // fallback to hardcoded file
-            String fileName = "SODChecks.txt";
-            String completeUrl = CDN_BASE_URL + fileName;
-            String downLoadLink = "<a href=\"" + completeUrl + "\" target=\"_blank\">Download SODChecks.txt</a>";
-            return downLoadLink;
-        }
+        return SODAGeneralUtil.downloadDefaultChecklist(existingChecklist);
     }
 
     @Tool("Parses CSV and extracts mobile numbers to return a List of Strings containing mobile numbers.")
