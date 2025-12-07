@@ -43,6 +43,7 @@ import com.opsara.sodagent.entities.OrganisationChecklist;
 
 
 import static com.opsara.sodagent.constants.Constants.*;
+import static com.opsara.sodagent.constants.DefaultChecklist.ASSESSMENT_URL;
 import static com.opsara.sodagent.constants.DefaultChecklist.DEFAULT_CHECKLIST_JSON;
 import static com.opsara.sodagent.util.SODAGeneralUtil.downloadDefaultChecklist;
 import static com.opsara.sodagent.util.SODAGeneralUtil.parseGenerateJSONStoreAgainstOrg;
@@ -106,13 +107,13 @@ public class SODAgentController {
                     responseString += downloadDefaultChecklist(existingChecklist) + "\n";
                     responseString += "If you do not want to edit and want to stay with default checklist, please let us know. I will not remind you again. \n";
                     responseString += "You can always preview how it looks to store managers here. \n";
-                    responseString += "<a href=\"" + "/fillsodchecklist?hashtoken=" + hashtoken + "\" target=\"_blank\">View Checklist</a>" + " \n";
+                    responseString += "<a href=\"" + ASSESSMENT_URL + hashtoken + "\" target=\"_blank\">View Checklist</a>" + " \n";
                     break;
                 case 2:
                     responseString += new String("Your SOD is initialised as per your template. Roll it out now \n");
                     responseString += "For rolling out use the prompt like Roll out to Name at mobile. \n";
                     responseString += "You can always preview how it looks to store managers here. \n";
-                    responseString += "<a href=\"" + "/fillsodchecklist?hashtoken=" + hashtoken + "\" target=\"_blank\">View Checklist</a>" + " \n";
+                    responseString += "<a href=\"" + ASSESSMENT_URL + hashtoken + "\" target=\"_blank\">View Checklist</a>" + " \n";
                     responseString += "You can also download the checklist you uploaded here. \n";
                     responseString += downloadDefaultChecklist(existingChecklist) + "\n";
                     break;
@@ -122,13 +123,13 @@ public class SODAgentController {
                     responseString += downloadDefaultChecklist(existingChecklist) + "\n";
                     responseString += "If you do not want to edit and want to stay with default checklist, please let us know. I will not remind you again. \n";
                     responseString += "You can always preview how it looks to store managers here. \n";
-                    responseString += "<a href=\"" + "/fillsodchecklist?hashtoken=" + hashtoken + "\" target=\"_blank\">View Checklist</a>" + " \n";
+                    responseString += "<a href=\"" + ASSESSMENT_URL + hashtoken + "\" target=\"_blank\">View Checklist</a>" + " \n";
                     break;
                 case 5:
                     responseString += new String("Hello. You can start querying the data received from people you rolled it out to.\n");
                     responseString +=new String("See sample prompts to query insights in prompts guide.\n");
                     responseString += "You can always preview how it looks to store managers here. \n";
-                    responseString += "<a href=\"" + "/fillsodchecklist?hashtoken=" + hashtoken + "\" target=\"_blank\">View Checklist</a>" + " \n";
+                    responseString += "<a href=\"" + ASSESSMENT_URL + hashtoken + "\" target=\"_blank\">View Checklist</a>" + " \n";
                     responseString += "You can also download the checklist you uploaded here. \n";
                     responseString += downloadDefaultChecklist(existingChecklist) + "\n";
 
@@ -136,7 +137,7 @@ public class SODAgentController {
                 default:
                     responseString += new String("Hello. See sample prompts to query insights in prompts guide.\n");
                     responseString += "You can always preview how it looks to store managers here. \n";
-                    responseString += "<a href=\"" + "/fillsodchecklist?hashtoken=" + hashtoken + "\" target=\"_blank\">View Checklist</a>" + " \n";
+                    responseString += "<a href=\"" + ASSESSMENT_URL + hashtoken + "\" target=\"_blank\">View Checklist</a>" + " \n";
                     responseString += "You can also download the checklist you uploaded here. \n";
                     responseString += downloadDefaultChecklist(existingChecklist) + "\n";
 
@@ -537,7 +538,7 @@ public class SODAgentController {
                 } catch (Exception e) {
                     logger.debug("Unable to generate hash for checklist link", e);
                 }
-                String link = "/fillsodchecklist?hashtoken=" + hash;
+                String link = ASSESSMENT_URL + hash;
 
                 checklistDataList.add(new UserChecklistDataDTO(dateFilled, String.valueOf(oId),ent.getUserCredential(), String.valueOf(ent.getStoreId()), link));
             }
@@ -606,7 +607,7 @@ public class SODAgentController {
                 } catch (Exception e) {
                     logger.debug("Unable to generate hash for checklist link", e);
                 }
-                String link = "/fillsodchecklist?hashtoken=" + hash;
+                String link = ASSESSMENT_URL + hash;
 
                 checklistDataList.add(new UserChecklistDataDTO(dateFilled, String.valueOf(oId),ent.getUserCredential(), String.valueOf(ent.getStoreId()), link));
             }

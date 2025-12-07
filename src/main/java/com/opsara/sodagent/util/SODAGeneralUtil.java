@@ -20,6 +20,7 @@ import org.apache.commons.csv.CSVRecord;
 
 import static com.opsara.sodagent.constants.Constants.AWS_BUCKET_NAME;
 import static com.opsara.sodagent.constants.Constants.CDN_BASE_URL;
+import static com.opsara.sodagent.constants.DefaultChecklist.ASSESSMENT_URL;
 
 
 public class SODAGeneralUtil {
@@ -31,7 +32,7 @@ public class SODAGeneralUtil {
         responseString += new String("SOD Agent is successfully initialised for your organisation.\n");
         responseString += "A default template is copied. \n";
         responseString += "You can see how the form would look to your store managers here: \n";
-        responseString += "<a href=\"" + "/fillsodchecklist?hashtoken=" + hashtoken + "\" target=\"_blank\">View Checklist</a>" + " \n";
+        responseString += "<a href=\"" + ASSESSMENT_URL + hashtoken + "\" target=\"_blank\">View Checklist</a>" + " \n";
         responseString += "\n If you want to change it, you can download the checklist from here\n";
         responseString += csvUrl;
         responseString += "\n After download, edit it and upload back the modified checklist. \n";
