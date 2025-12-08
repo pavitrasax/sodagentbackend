@@ -54,12 +54,25 @@ public class SODAGeneralUtil {
         }
         ObjectMapper mapper = new ObjectMapper();
         try (BufferedReader br = new BufferedReader(new InputStreamReader(inputStream, StandardCharsets.UTF_8))) {
+            StringBuilder all = new StringBuilder();
+            String line;
+            while ((line = br.readLine()) != null) {
+                all.append(line).append("\n");
+            }
+            String content = all.toString();
+            // Remove leading BOM if present
+            if (!content.isEmpty() && content.charAt(0) == '\uFEFF') {
+                content = content.substring(1);
+            }
+            // Optionally remove other leading invisible marks and extra leading whitespace/newlines
+            content = content.replaceFirst("^([\\s\\u200B\\u200C\\u200D\\u200E\\u200F]+)", "");
+
             CSVFormat format = CSVFormat.DEFAULT.builder()
                     .setTrim(true)
                     .setCommentMarker('#')
                     .build();
 
-            try (CSVParser parser = new CSVParser(br, format)) {
+            try (CSVParser parser = CSVParser.parse(content, format)) {
                 ArrayNode sections = mapper.createArrayNode();
                 ObjectNode section = mapper.createObjectNode();
                 section.put("id", "");

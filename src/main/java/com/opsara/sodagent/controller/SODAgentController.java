@@ -191,6 +191,9 @@ public class SODAgentController {
 
         String checkListJson = parseGenerateJSONStoreAgainstOrg(file.getInputStream());
         logger.info("generated checkListJson : {}", checkListJson);
+        if(checkListJson.startsWith("ERROR")) {
+            return ResponseEntity.badRequest().body(new UploadResponse(false, checkListJson));
+        }
         String organisationId = (String) httpRequest.getAttribute("organisationId");
         Integer orgId = Integer.valueOf(organisationId);
         sodagentService.saveChecklist(orgId, checkListJson);
