@@ -64,8 +64,18 @@ public class SODAGeneralUtil {
             if (!content.isEmpty() && content.charAt(0) == '\uFEFF') {
                 content = content.substring(1);
             }
-            // Optionally remove other leading invisible marks and extra leading whitespace/newlines
+
+            // remove leading zero-width / directional marks and whitespace
             content = content.replaceFirst("^([\\s\\u200B\\u200C\\u200D\\u200E\\u200F]+)", "");
+
+            // remove a leading "sep=..." line if present at very start (case-insensitive)
+            content = content.replaceFirst("(?i)^\\s*sep\\s*=.*\\r?\\n", "");
+
+            // remove one or more leading comment lines that start with '#' (only when at start)
+            content = content.replaceFirst("(?m)^(?:\\s*#.*\\r?\\n)+", "");
+
+            // remove an initial CSV header row like "id,..." if it appears at the start
+            content = content.replaceFirst("(?im)^\\s*id\\s*,.*\\r?\\n", "");
 
             CSVFormat format = CSVFormat.DEFAULT.builder()
                     .setTrim(true)
@@ -96,19 +106,9 @@ public class SODAGeneralUtil {
 
                     // prompt spans from index 1 to rec.size() - 3 (inclusive)
                     String prompt;
-                    if (rec.size() == 4) {
-                        prompt = rec.get(1).trim();
-                    } else {
-                        StringBuilder p = new StringBuilder();
-                        for (int i = 1; i <= rec.size() - 3; i++) {
-                            if (i > 1) p.append(",");
-                            p.append(rec.get(i));
-                        }
-                        prompt = p.toString().trim();
-                    }
-
-                    String questionMandatory = rec.get(rec.size() - 2).trim().toUpperCase();
-                    String attachmentNeeded = rec.get(rec.size() - 1).trim().toUpperCase();
+                    prompt = rec.get(1).trim();
+                    String questionMandatory = rec.get(2).trim().toUpperCase();
+                    String attachmentNeeded = rec.get(3).trim().toUpperCase();
 
                     if (id.isEmpty()) {
                         return "ERROR: empty id at record around line " + lineNo;
