@@ -188,7 +188,7 @@ public class SODAGeneralUtil {
             sb.append("# You can add new areas by appending new lines at the end of the file. Make sure to use unique Ids and Names for new areas.\n");
             sb.append("# question-mandatory is a key word , write Y or N as third parameter.\n");
             sb.append("# attachment-needed is a key word , write Y or N or M as third parameter. N=No, Y=Yes, M=Yes and Mandatory.\n");
-            sb.append("# id,name,question-mandatory [N/Y], attachment-needed [N/Y/M]");
+            sb.append("# id,name,question-mandatory [N/Y], attachment-needed [N/Y/M] \n");
 
             com.fasterxml.jackson.databind.JsonNode sections = root.path("sections");
             if (sections.isMissingNode() || !sections.isArray()) {
