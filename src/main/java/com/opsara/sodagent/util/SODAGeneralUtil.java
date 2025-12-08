@@ -54,35 +54,13 @@ public class SODAGeneralUtil {
         }
         ObjectMapper mapper = new ObjectMapper();
         try (BufferedReader br = new BufferedReader(new InputStreamReader(inputStream, StandardCharsets.UTF_8))) {
-            StringBuilder all = new StringBuilder();
-            String line;
-            while ((line = br.readLine()) != null) {
-                all.append(line).append("\n");
-            }
-            String content = all.toString();
-            // Remove leading BOM if present
-            if (!content.isEmpty() && content.charAt(0) == '\uFEFF') {
-                content = content.substring(1);
-            }
-
-            // remove leading zero-width / directional marks and whitespace
-            content = content.replaceFirst("^([\\s\\u200B\\u200C\\u200D\\u200E\\u200F]+)", "");
-
-            // remove a leading "sep=..." line if present at very start (case-insensitive)
-            content = content.replaceFirst("(?i)^\\s*sep\\s*=.*\\r?\\n", "");
-
-            // remove one or more leading comment lines that start with '#' (only when at start)
-            content = content.replaceFirst("(?m)^(?:\\s*#.*\\r?\\n)+", "");
-
-            // remove an initial CSV header row like "id,..." if it appears at the start
-            content = content.replaceFirst("(?im)^\\s*id\\s*,.*\\r?\\n", "");
 
             CSVFormat format = CSVFormat.DEFAULT.builder()
                     .setTrim(true)
                     .setCommentMarker('#')
                     .build();
 
-            try (CSVParser parser = CSVParser.parse(content, format)) {
+            try (CSVParser parser = CSVParser.parse(br, format)) {
                 ArrayNode sections = mapper.createArrayNode();
                 ObjectNode section = mapper.createObjectNode();
                 section.put("id", "");
@@ -104,9 +82,8 @@ public class SODAGeneralUtil {
 
                     String id = rec.get(0).trim();
 
-                    // prompt spans from index 1 to rec.size() - 3 (inclusive)
-                    String prompt;
-                    prompt = rec.get(1).trim();
+
+                    String prompt = rec.get(1).trim();
                     String questionMandatory = rec.get(2).trim().toUpperCase();
                     String attachmentNeeded = rec.get(3).trim().toUpperCase();
 
