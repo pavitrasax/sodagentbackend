@@ -40,13 +40,15 @@ public class SODAgentTools {
     private UserService userService;
     private String organisationId;
     private URLGenerationUtil urlGenerationUtil;
+    private MSG91WhatsappUtil msg91WhatsappUtil;
     private static final Logger logger = LoggerFactory.getLogger(SODAgentTools.class);
 
     public SODAgentTools(SODAgentService sodAgentService) {
         this.sodAgentService = sodAgentService;
     }
 
-    public SODAgentTools(URLGenerationUtil urlGenerationUtil, SODAgentService sodAgentService, UserService userService, String organisationId) {
+    public SODAgentTools(MSG91WhatsappUtil msg91WhatsappUtil, URLGenerationUtil urlGenerationUtil, SODAgentService sodAgentService, UserService userService, String organisationId) {
+        this.msg91WhatsappUtil = msg91WhatsappUtil;
         this.urlGenerationUtil = urlGenerationUtil;
         this.sodAgentService = sodAgentService;
         this.userService = userService;
@@ -207,7 +209,7 @@ public class SODAgentTools {
 
         mobileNumbers.forEach(mobile -> {
             mobile = GeneralUtil.getInstance().convertMobileNumberToE164Standard(mobile);
-            userService.saveOrUpdateStoreUser(mobile, null, Integer.valueOf(organisationId));
+            StoreUser savedUser = userService.saveOrUpdateStoreUser(mobile, null, Integer.valueOf(organisationId));
             sodAgentService.saveOrUpdateRolloutUser(mobile, null, Integer.valueOf(organisationId));
 
             String hash = "";
@@ -222,7 +224,7 @@ public class SODAgentTools {
             DateTimeFormatter outputFormatter = DateTimeFormatter.ofPattern("d MMMM yyyy", Locale.ENGLISH);
             String formattedDate = today.format(outputFormatter);
 
-            String whatsappUtilResponse = MSG91WhatsappUtil.getInstance().sendGenericFillFormMessageOTP(mobile, null, "sod form", formattedDate, "4", sodaChecklistUrl + hash);
+            String whatsappUtilResponse = msg91WhatsappUtil.sendGenericFillFormMessageNewTemplate(mobile, savedUser.getName(), "sod form", formattedDate, sodaChecklistUrl + hash, savedUser.getOrgId());
             logger.info("whatsappUtilResponse " + whatsappUtilResponse);
         });
 
@@ -237,7 +239,7 @@ public class SODAgentTools {
         return returnMessage;
     }
 
-    @Tool("Roll out the checklist to one or more users by their mobile numbers and name. Example: 'Roll out to Pavitra at 919632542332' or 'Roll out to Pavitra and Sanskriti at 919632542332 and 919844517222 respectively'.")
+    @Tool("Roll out the checklist to one or more users by their mobile numbers and name with key as mobile number and value as name.")
     public String rolloutToMobileNameMap(Map<String, String> mobileNameMaps) {
         logger.info("Rollout is called with mobile numbers. mobileNameMaps: " + mobileNameMaps);
 
@@ -270,7 +272,7 @@ public class SODAgentTools {
 
         mobileNameMaps.forEach((mobile, name) -> {
             mobile = GeneralUtil.getInstance().convertMobileNumberToE164Standard(mobile);
-            userService.saveOrUpdateStoreUser(mobile, name, Integer.valueOf(organisationId));
+            StoreUser savedUser = userService.saveOrUpdateStoreUser(mobile, name, Integer.valueOf(organisationId));
             sodAgentService.saveOrUpdateRolloutUser(mobile, name, Integer.valueOf(organisationId));
 
             String hash = "";
@@ -282,7 +284,7 @@ public class SODAgentTools {
             }
 
 
-            String whatsappUtilResponse = MSG91WhatsappUtil.getInstance().sendGenericFillFormMessageOTP(mobile, name, "sod form", formattedDate, "4", sodaChecklistUrl + hash);
+            String whatsappUtilResponse = msg91WhatsappUtil.sendGenericFillFormMessageNewTemplate(mobile, savedUser.getName(), "sod form", formattedDate, sodaChecklistUrl + hash, savedUser.getOrgId());
             logger.info("whatsappUtilResponse " + whatsappUtilResponse);
         });
 
@@ -372,9 +374,8 @@ public class SODAgentTools {
             } catch (Exception e) {
                 // handle exception
             }
-            String whatsappUtilResponse = MSG91WhatsappUtil.getInstance().sendGenericFillFormMessageOTP(
-                    mobile, name, "sod form", formattedDate, "4", sodaChecklistUrl + hash
-            );
+            String whatsappUtilResponse = msg91WhatsappUtil.sendGenericFillFormMessageNewTemplate(mobile, "User", "sod form", formattedDate, sodaChecklistUrl + hash, Integer.valueOf(organisationId));
+
             logger.info("Reminder whatsappUtilResponse " + whatsappUtilResponse);
         }
 

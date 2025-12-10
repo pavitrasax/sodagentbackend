@@ -5,6 +5,7 @@ import com.fasterxml.jackson.annotation.JsonProperty;
 import com.fasterxml.jackson.core.type.TypeReference;
 import com.opsara.aaaservice.services.UserService;
 import com.opsara.aaaservice.util.AWSUtil;
+import com.opsara.aaaservice.util.MSG91WhatsappUtil;
 import com.opsara.aaaservice.util.URLGenerationUtil;
 import com.opsara.sodagent.entities.RolloutUser;
 import com.opsara.sodagent.entities.UserChecklistData;
@@ -65,6 +66,9 @@ public class SODAgentController {
 
     @Autowired
     URLGenerationUtil urlGenerationUtil;
+
+    @Autowired
+    MSG91WhatsappUtil msg91WhatsappUtil;
 
     /**
      * Initializes the SOD Agent for the requesting organization.
@@ -712,7 +716,7 @@ public class SODAgentController {
                 .build();
 
         logger.info("OrganisationId: " + organisationId);
-        SODAgentTools tools = new SODAgentTools(urlGenerationUtil, sodagentService, userService, organisationId);
+        SODAgentTools tools = new SODAgentTools(msg91WhatsappUtil, urlGenerationUtil, sodagentService, userService, organisationId);
 
         Assistant assistant = AiServices.builder(Assistant.class).chatModel(model).tools(tools).chatMemory(MessageWindowChatMemory.withMaxMessages(10)).build();
         String answer = assistant.chatAndInvoke(query);

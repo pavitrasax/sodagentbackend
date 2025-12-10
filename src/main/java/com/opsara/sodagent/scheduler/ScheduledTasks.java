@@ -27,6 +27,7 @@ public class ScheduledTasks {
     private final OrganisationRepository organisationRepository;
     private final RolloutUserRepository rolloutUserRepository;
     private final URLGenerationUtil urlGenerationUtil;
+    private final MSG91WhatsappUtil msg91WhatsappUtil;
 
     @PostConstruct
     public void init() {
@@ -35,6 +36,8 @@ public class ScheduledTasks {
 
     // runs daily at 10:00 AM IST
     @Scheduled(cron = "0 0 10 * * ?", zone = "Asia/Kolkata")
+    // for testing purpose, runs every minute
+    // @Scheduled(cron = "0 */1 * * * ?", zone = "Asia/Kolkata")
     public void sendRemindersAt10amIst() {
         log.info("Scheduled job started: sendRemindersAt10amIst");
         List<Organisation> orgs = organisationRepository.findBySendWhatsappRemindersTrue();
@@ -63,7 +66,7 @@ public class ScheduledTasks {
                             //throw new RuntimeException(e);
                         }
 
-                        String whatsappUtilResponse = MSG91WhatsappUtil.getInstance().sendGenericFillFormMessageOTP(user.getMobileNumber(), user.getName(), "sod form", formattedDate, "4", sodaChecklistUrl + hash);
+                        String whatsappUtilResponse = msg91WhatsappUtil.sendGenericFillFormMessageNewTemplate(mobile,"User","sod form",formattedDate,sodaChecklistUrl+hash,user.getOrgId());
 
                     } catch (Exception ex) {
                         log.error("Failed to send WhatsApp to user id={} orgId={}", user.getMobileNumber(), orgId, ex);
