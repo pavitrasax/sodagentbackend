@@ -89,12 +89,17 @@ public class SODAgentService {
         OrganisationChecklist organisationChecklist = checklistRepository.findById(organisationChecklistId).orElseThrow(() -> new IllegalArgumentException("OrganisationChecklist not found"));
 
 
-        var existingOpt = userChecklistDataRepository.findByUserCredentialAndUserCredentialTypeAndFilledForPeriodAndOrganisationChecklist_Id(userCredential, userCredentialType, filledForPeriod, organisationChecklistId);
-
+        var existingOpt = userChecklistDataRepository.findByFilledForPeriodAndStoreIdAndOrganisationChecklist_Id(
+                filledForPeriod, Integer.valueOf(storeId), organisationChecklistId
+        );
         if (existingOpt.isPresent()) {
             UserChecklistData existing = existingOpt.get();
-            existing.setDataJson(dataJson);
-            return userChecklistDataRepository.save(existing);
+            if (existing.getUserCredential().equals(userCredential)) {
+                existing.setDataJson(dataJson);
+                return userChecklistDataRepository.save(existing);
+            } else {
+                throw new IllegalArgumentException("A different user has already submitted data for this store, period and checklist.");
+            }
         } else {
             logger.info("No existing UserChecklistData found. Creating new record.");
             UserChecklistData userChecklistData = new UserChecklistData();

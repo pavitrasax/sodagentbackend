@@ -57,24 +57,3 @@ CREATE TABLE IF NOT EXISTS sodagent.user_checklist_data
         ON UPDATE NO ACTION
         ON DELETE CASCADE
 );
-
---------------------------------------------------------------------------
--- Table: sodagent.vm_ideal_data
--- DROP TABLE IF EXISTS sodagent.vm_ideal_data;
---------------------------------------------------------------------------
-
-CREATE TABLE IF NOT EXISTS sodagent.vm_ideal_data
-(
-    id SERIAL PRIMARY KEY,
-    user_credential character varying(100) COLLATE pg_catalog."default" NOT NULL,
-    user_credential_type character varying(10) COLLATE pg_catalog."default" NOT NULL,
-    filled_for_period character varying(20) COLLATE pg_catalog."default" NOT NULL,
-    organisation_checklist_id bigint NOT NULL,
-    data_json jsonb NOT NULL,
-    created_at timestamp without time zone NOT NULL DEFAULT now(),
-    CONSTRAINT unique_admin_period_checklist UNIQUE (user_credential, user_credential_type, filled_for_period, organisation_checklist_id),
-    CONSTRAINT fk_organisation_checklist FOREIGN KEY (organisation_checklist_id)
-        REFERENCES sodagent.organisation_checklist (id) MATCH SIMPLE
-        ON UPDATE NO ACTION
-        ON DELETE CASCADE
-);

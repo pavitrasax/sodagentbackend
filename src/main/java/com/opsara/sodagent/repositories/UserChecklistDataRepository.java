@@ -44,4 +44,5 @@ public interface UserChecklistDataRepository extends JpaRepository<UserChecklist
             @Param("orgId") Integer orgId
     );
 
+    Optional<UserChecklistData> findByFilledForPeriodAndStoreIdAndOrganisationChecklist_Id(String filledForPeriod, Integer integer, Long organisationChecklistId);
 }
