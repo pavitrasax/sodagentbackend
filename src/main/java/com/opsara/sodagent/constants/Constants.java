@@ -34,6 +34,7 @@ public final class Constants {
             "https://user.opsara.io",
             "https://admin.opsara.io",
             "https://app.opsara.io",
+            "https://insights.opsara.io",
             "https://*.replit.app",
             "https://replit.app",
             "https://*.replit.dev",
