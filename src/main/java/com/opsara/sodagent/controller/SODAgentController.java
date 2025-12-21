@@ -107,43 +107,43 @@ public class SODAgentController {
             int status = existingChecklist.getStatus() != null ? existingChecklist.getStatus() : 0;
             switch (status) {
                 case 1:
-                    responseString += new String("SOD Agent is already initialised with default checklist. Click here to download , edit and upload the checklist as per your choice. \n");
-                    responseString += downloadDefaultChecklist(existingChecklist) + "\n";
-                    responseString += "If you do not want to edit and want to stay with default checklist, please let us know. I will not remind you again. \n";
-                    responseString += "You can always preview how it looks to store managers here. \n";
-                    responseString += "<a href=\"" + ASSESSMENT_URL + hashtoken + "\" target=\"_blank\">View Checklist</a>" + " \n";
+                    responseString += new String("SOD Agent is already initialised with default checklist. Click here to download , edit and upload the checklist as per your choice. \n\n");
+                    responseString += downloadDefaultChecklist(existingChecklist) + "\n\n";
+                    responseString += "If you do not want to edit and want to stay with default checklist, please let us know. I will not remind you again. \n\n";
+                    responseString += "You can always preview how it looks to store managers here. \n\n";
+                    responseString += "[View Checklist](" + ASSESSMENT_URL + hashtoken + ")" + " \n\n";
                     break;
                 case 2:
-                    responseString += new String("Your SOD is initialised as per your template. Roll it out now \n");
-                    responseString += "For rolling out use the prompt like Roll out to Name at mobile. \n";
-                    responseString += "You can always preview how it looks to store managers here. \n";
-                    responseString += "<a href=\"" + ASSESSMENT_URL + hashtoken + "\" target=\"_blank\">View Checklist</a>" + " \n";
-                    responseString += "You can also download the checklist you uploaded here. \n";
-                    responseString += downloadDefaultChecklist(existingChecklist) + "\n";
+                    responseString += new String("Your SOD is initialised as per your template. Roll it out now \n\n");
+                    responseString += "For rolling out use the prompt like Roll out to Name at mobile. \n\n";
+                    responseString += "You can always preview how it looks to store managers here. \n\n";
+                    responseString += "[View Checklist](" + ASSESSMENT_URL + hashtoken + ")" + " \n\n";
+                    responseString += "You can also download the checklist you uploaded here. \n\n";
+                    responseString += downloadDefaultChecklist(existingChecklist) + "\n\n";
                     break;
                 case 3:
-                    responseString += new String("Your default checklist is already rolled out to few users. How ever I recommend you see it once , may be you want to edit and upload again.\n");
-                    responseString += "Click here to download , edit and upload \n";
-                    responseString += downloadDefaultChecklist(existingChecklist) + "\n";
-                    responseString += "If you do not want to edit and want to stay with default checklist, please let us know. I will not remind you again. \n";
-                    responseString += "You can always preview how it looks to store managers here. \n";
-                    responseString += "<a href=\"" + ASSESSMENT_URL + hashtoken + "\" target=\"_blank\">View Checklist</a>" + " \n";
+                    responseString += new String("Your default checklist is already rolled out to few users. How ever I recommend you see it once , may be you want to edit and upload again.\n\n");
+                    responseString += "Click here to download , edit and upload \n\n";
+                    responseString += downloadDefaultChecklist(existingChecklist) + "\n\n";
+                    responseString += "If you do not want to edit and want to stay with default checklist, please let us know. I will not remind you again. \n\n";
+                    responseString += "You can always preview how it looks to store managers here. \n\n";
+                    responseString += "[View Checklist](" + ASSESSMENT_URL + hashtoken + ")" + " \n\n";
                     break;
                 case 5:
-                    responseString += new String("Hello. You can start querying the data received from people you rolled it out to.\n");
-                    responseString +=new String("See sample prompts to query insights in prompts guide.\n");
-                    responseString += "You can always preview how it looks to store managers here. \n";
-                    responseString += "<a href=\"" + ASSESSMENT_URL + hashtoken + "\" target=\"_blank\">View Checklist</a>" + " \n";
-                    responseString += "You can also download the checklist you uploaded here. \n";
-                    responseString += downloadDefaultChecklist(existingChecklist) + "\n";
+                    responseString += new String("Hello. You can start querying the data received from people you rolled it out to.\n\n");
+                    responseString +=new String("See sample prompts to query insights in prompts guide.\n\n");
+                    responseString += "You can always preview how it looks to store managers here. \n\n";
+                    responseString += "[View Checklist](" + ASSESSMENT_URL + hashtoken + ")" + " \n\n";
+                    responseString += "You can also download the checklist you uploaded here. \n\n";
+                    responseString += downloadDefaultChecklist(existingChecklist) + "\n\n";
 
                     break;
                 default:
-                    responseString += new String("Hello. See sample prompts to query insights in prompts guide.\n");
-                    responseString += "You can always preview how it looks to store managers here. \n";
-                    responseString += "<a href=\"" + ASSESSMENT_URL + hashtoken + "\" target=\"_blank\">View Checklist</a>" + " \n";
-                    responseString += "You can also download the checklist you uploaded here. \n";
-                    responseString += downloadDefaultChecklist(existingChecklist) + "\n";
+                    responseString += new String("Hello. See sample prompts to query insights in prompts guide.\n\n");
+                    responseString += "You can always preview how it looks to store managers here. \n\n";
+                    responseString += "[View Checklist](" + ASSESSMENT_URL + hashtoken + ")" + " \n\n";
+                    responseString += "You can also download the checklist you uploaded here. \n\n";
+                    responseString += downloadDefaultChecklist(existingChecklist) + "\n\n";
 
             }
         }
@@ -205,9 +205,9 @@ public class SODAgentController {
         sodagentService.saveChecklist(orgId, checkListJson);
         logger.info("Your Checklist is Stored in Database successfully");
 
-        String responseMessage = "Your Checklist is Stored in Database successfully. \n";
-        responseMessage += "Now you may want to roll it out to store managers. Use prompt like \"Roll out to name at mobile\". It would roll out to given person at given mobile number. \n";
-        responseMessage += "Or you can say \"Roll out to every one\". It would roll out to all store managers already existing in database.\n";
+        String responseMessage = "Your Checklist is Stored in Database successfully. \n\n";
+        responseMessage += "Now you may want to roll it out to store managers. Use prompt like \"Roll out to name at mobile\". It would roll out to given person at given mobile number. \n\n";
+        responseMessage += "Or you can say \"Roll out to every one\". It would roll out to all store managers already existing in database.\n\n";
         UploadResponse response = new UploadResponse(true, responseMessage);
         return ResponseEntity.ok(response);
     }

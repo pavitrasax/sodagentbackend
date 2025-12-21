@@ -92,46 +92,46 @@ public class SODAgentTools {
                     break;
                 case 1:
                     logger.info("case 1 called  ....");
-                    responseString += new String("SOD Agent is already initialised with default checklist. Click here to download , edit and upload the checklist as per your choice. \n");
-                    responseString += downloadDefaultChecklist() + "\n";
-                    responseString += "If you do not want to edit and want to stay with default checklist, please let us know. I will not remind you again. \n";
-                    responseString += "You can always preview how it looks to store managers here. \n";
-                    responseString += "<a href=\"" + ASSESSMENT_URL + hashtoken + "\" target=\"_blank\">View Checklist</a>" + " \n";
+                    responseString += new String("SOD Agent is already initialised with default checklist. Click here to download , edit and upload the checklist as per your choice. \n\n");
+                    responseString += downloadDefaultChecklist() + "\n\n";
+                    responseString += "If you do not want to edit and want to stay with default checklist, please let us know. I will not remind you again. \n\n";
+                    responseString += "You can always preview how it looks to store managers here. \n\n";
+                    responseString += "[View Checklist](" + OPSARA_WEB_URL + ASSESSMENT_URL + hashtoken + ")" + " \n\n";
                     break;
                 case 2:
                     logger.info("case 2 called  ....");
-                    responseString += new String("Your SOD is initialised as per your template. Roll it out now \n");
-                    responseString += "For rolling out use the prompt like Roll out to Name at mobile. \n";
-                    responseString += "You can always preview how it looks to store managers here. \n";
-                    responseString += "<a href=\"" + ASSESSMENT_URL + hashtoken + "\" target=\"_blank\">View Checklist</a>" + " \n";
-                    responseString += "You can also download the checklist you uploaded here. \n";
-                    responseString += downloadDefaultChecklist() + "\n";
+                    responseString += new String("Your SOD is initialised as per your template. Roll it out now \n\n");
+                    responseString += "For rolling out use the prompt like Roll out to Name at mobile. \n\n";
+                    responseString += "You can always preview how it looks to store managers here. \n\n";
+                    responseString += "[View Checklist](" + OPSARA_WEB_URL + ASSESSMENT_URL + hashtoken + ")" + " \n\n";
+                    responseString += "You can also download the checklist you uploaded here. \n\n";
+                    responseString += downloadDefaultChecklist() + "\n\n";
                     break;
                 case 3:
                     logger.info("case 3 called  ....");
-                    responseString += new String("Your default checklist is already rolled out to few users. How ever I recommend you see it once , may be you want to edit and upload again.\n");
+                    responseString += new String("Your default checklist is already rolled out to few users. How ever I recommend you see it once , may be you want to edit and upload again.\n\n");
                     responseString += "Click here to download , edit and upload";
-                    responseString += downloadDefaultChecklist() + "\n";
-                    responseString += "If you do not want to edit and want to stay with default checklist, please let us know. I will not remind you again. \n";
-                    responseString += "You can always preview how it looks to store managers here. \n";
-                    responseString += "<a href=\"" + ASSESSMENT_URL + hashtoken + "\" target=\"_blank\">View Checklist</a>" + " \n";
+                    responseString += downloadDefaultChecklist() + "\n\n";
+                    responseString += "If you do not want to edit and want to stay with default checklist, please let us know. I will not remind you again. \n\n";
+                    responseString += "You can always preview how it looks to store managers here. \n\n";
+                    responseString += "[View Checklist](" + OPSARA_WEB_URL + ASSESSMENT_URL + hashtoken + ")" + " \n\n";
                     break;
                 case 5:
                     logger.info("case 5 called  ....");
-                    responseString += new String("Hello. You can start querying the data received from people you rolled it out to.\n");
-                    responseString += new String("See sample prompts to query insights in prompts guide.\n");
-                    responseString += "You can always preview how it looks to store managers here. \n";
-                    responseString += "<a href=\"" + ASSESSMENT_URL + hashtoken + "\" target=\"_blank\">View Checklist</a>" + " \n";
-                    responseString += "You can also download the checklist you uploaded here. \n";
-                    responseString += downloadDefaultChecklist() + "\n";
+                    responseString += new String("Hello. You can start querying the data received from people you rolled it out to.\n\n");
+                    responseString += new String("See sample prompts to query insights in prompts guide.\n\n");
+                    responseString += "You can always preview how it looks to store managers here. \n\n";
+                    responseString += "[View Checklist](" + OPSARA_WEB_URL + ASSESSMENT_URL + hashtoken + ")" + " \n\n";
+                    responseString += "You can also download the checklist you uploaded here. \n\n";
+                    responseString += downloadDefaultChecklist() + "\n\n";
                     break;
                 default:
                     logger.info("case default called  ....");
-                    responseString += new String("See sample prompts to query insights in prompts guide.\n");
-                    responseString += "You can always preview how it looks to store managers here. \n";
-                    responseString += "<a href=\"" + ASSESSMENT_URL + hashtoken + "\" target=\"_blank\">View Checklist</a>" + " \n";
-                    responseString += "You can also download the checklist you uploaded here. \n";
-                    responseString += downloadDefaultChecklist() + "\n";
+                    responseString += new String("See sample prompts to query insights in prompts guide.\n\n");
+                    responseString += "You can always preview how it looks to store managers here. \n\n";
+                    responseString += "[View Checklist](" + OPSARA_WEB_URL + ASSESSMENT_URL + hashtoken + ")" + " \n\n";
+                    responseString += "You can also download the checklist you uploaded here. \n\n";
+                    responseString += downloadDefaultChecklist() + "\n\n";
             }
 
         }
@@ -478,7 +478,7 @@ public class SODAgentTools {
             throw new RuntimeException(e);
         }
 
-        String message = "You can see how the form would look to your store managers here: \n";
+        String message = "You can see how the form would look to your store managers here: \n\n";
 
         String downLoadLink = "[Here](" + OPSARA_WEB_URL + ASSESSMENT_URL + hashtoken + ")";
         String finalMesssage = message + downLoadLink;

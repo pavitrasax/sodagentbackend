@@ -29,16 +29,16 @@ public class SODAGeneralUtil {
 
     public static String generateInitMessage(String csvUrl, String hashtoken) {
         String responseString = new String();
-        responseString += new String("SOD Agent is successfully initialised for your organisation.\n");
-        responseString += "A default template is copied. \n";
-        responseString += "You can see how the form would look to your store managers here: \n";
-        responseString += "<a href=\"" + ASSESSMENT_URL + hashtoken + "\" target=\"_blank\">View Checklist</a>" + " \n";
-        responseString += "\n If you want to change it, you can download the checklist from here\n";
+        responseString += new String("SOD Agent is successfully initialised for your organisation.\n\n");
+        responseString += "A default template is copied. \n\n";
+        responseString += "You can see how the form would look to your store managers here: \n\n";
+        responseString += "[View Checklist](" + ASSESSMENT_URL + hashtoken + ")\n\n";
+        responseString += "\n\n If you want to change it, you can download the checklist from here\n\n";
         responseString += csvUrl;
-        responseString += "\n After download, edit it and upload back the modified checklist. \n";
-        responseString += "\n Or you may directly want to roll out to your store managers. \n";
-        responseString += "For rolling out use the prompt like \"Roll out to name at mobile\". It would roll out to given person at given mobile number.  \n";
-        responseString += "Or you can say \"Roll out to every one\". It would roll out to all store managers already existing in database.\n";
+        responseString += "\n\n After download, edit it and upload back the modified checklist. \n\n";
+        responseString += "\n\n Or you may directly want to roll out to your store managers. \n\n";
+        responseString += "For rolling out use the prompt like \"Roll out to name at mobile\". It would roll out to given person at given mobile number.  \n\n";
+        responseString += "Or you can say \"Roll out to every one\". It would roll out to all store managers already existing in database.\n\n";
 
         return responseString;
     }
@@ -261,7 +261,7 @@ public class SODAGeneralUtil {
             try {
                 AWSUtil.getInstance().uploadFileToS3(AWS_BUCKET_NAME, fileName, csvStream, csvContent.getBytes(StandardCharsets.UTF_8).length, "text/csv");
                 String signedS3Url = AWSUtil.getInstance().generatePresignedUrl(AWS_BUCKET_NAME, fileName);
-                return "<a href=\"" + signedS3Url + "\" target=\"_blank\">Download Checklist CSV</a>";
+                return "[Download Checklist CSV](" + signedS3Url + ")";
             } catch (Exception e) {
                 logger.error("Error uploading checklist CSV to S3", e);
                 return "Error Generating Template Download Link.";
