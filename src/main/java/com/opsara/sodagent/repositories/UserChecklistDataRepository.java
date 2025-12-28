@@ -6,11 +6,13 @@ import org.springframework.data.jpa.repository.JpaRepository;
 import com.opsara.sodagent.entities.UserChecklistData;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
+import org.springframework.stereotype.Repository;
 
 import java.time.LocalDateTime;
 import java.util.List;
 import java.util.Optional;
 
+@Repository("sodUserChecklistDataRepository")
 public interface UserChecklistDataRepository extends JpaRepository<UserChecklistData, Long> {
     List<UserChecklistData> findByOrganisationChecklist_OrgIdAndFilledForPeriodTsBetween(
             Integer orgId,

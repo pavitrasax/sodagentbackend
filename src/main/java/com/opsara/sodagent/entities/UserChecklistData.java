@@ -10,7 +10,7 @@ import java.math.BigDecimal;
 import java.time.LocalDateTime;
 
 @Data
-@Entity
+@Entity(name = "SODUserChecklistData")
 @Table(
         name = "user_checklist_data",
         schema = "sodagent",

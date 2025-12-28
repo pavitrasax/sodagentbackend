@@ -39,6 +39,7 @@ import java.nio.charset.StandardCharsets;
 import java.time.*;
 import java.time.format.DateTimeFormatter;
 import java.util.*;
+import java.util.function.Supplier;
 
 import com.opsara.sodagent.entities.OrganisationChecklist;
 
@@ -69,6 +70,9 @@ public class SODAgentController {
 
     @Autowired
     MSG91WhatsappUtil msg91WhatsappUtil;
+
+    @Autowired
+    AssistantCache assistantCache;
 
     /**
      * Initializes the SOD Agent for the requesting organization.
@@ -711,14 +715,35 @@ public class SODAgentController {
 
     private String mainExecution(String query, String organisationId, String userCredentials) {
 
-        // TODO : play with various models and check impact on accuracy etc. And understand cost also.
-        OpenAiChatModel model = OpenAiChatModel.builder().apiKey(OPENAI_API_KEY).modelName("gpt-4o-mini")
+        // Build model
+        OpenAiChatModel model = OpenAiChatModel.builder()
+                .apiKey(OPENAI_API_KEY)
+                .modelName("gpt-4o-mini")
                 .build();
 
-        logger.info("OrganisationId: " + organisationId);
+        // Compute explicit "today" with timezone
+        ZonedDateTime now = ZonedDateTime.now(ZoneId.systemDefault());
+        String nowIso = now.format(DateTimeFormatter.ISO_OFFSET_DATE_TIME);
+        String timezone = now.getZone().toString();
+
+        // Prepend explicit date/time instruction so model can't "remember" an old 'today'
+        String promptWithDate = String.format(
+                "System note: Current datetime is %s (timezone %s). Treat all relative terms like \"today\", \"yesterday\", \"MTD\" relative to this timestamp.\n\nUser: %s",
+                nowIso, timezone, query
+        );
+
         SODAgentTools tools = new SODAgentTools(msg91WhatsappUtil, urlGenerationUtil, sodagentService, userService, organisationId);
 
-        Assistant assistant = AiServices.builder(Assistant.class).chatModel(model).tools(tools).chatMemory(MessageWindowChatMemory.withMaxMessages(10)).build();
+        Supplier<Assistant> assistantSupplier = () -> AiServices.builder(Assistant.class)
+                .chatModel(model)
+                // choose desired memory window per earlier discussion (10 retained messages)
+                .chatMemory(MessageWindowChatMemory.withMaxMessages(10))
+                .tools(tools)
+                .build();
+
+        // Get or create assistant using organisationId + userCredentials + today's DDMMYYYY
+        Assistant assistant = assistantCache.getOrCreate(organisationId, userCredentials, assistantSupplier);
+
         String answer = assistant.chatAndInvoke(query);
 
         return answer;

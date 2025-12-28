@@ -8,7 +8,7 @@ import org.springframework.stereotype.Repository;
 import java.util.List;
 import java.util.Optional;
 
-@Repository
+@Repository("sodRolloutUserRepository")
 public interface RolloutUserRepository extends JpaRepository<RolloutUser, Long> {
     Optional<RolloutUser> findByMobileNumberAndOrgId(String mobileNumber, Integer orgId);// Add custom query methods if needed
     List<RolloutUser> findByOrgId(Integer orgId);

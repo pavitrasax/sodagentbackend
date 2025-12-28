@@ -7,7 +7,7 @@ import lombok.Data;
 import java.time.LocalDateTime;
 
 @Data
-@Entity
+@Entity(name = "SODRolloutUser")
 @Table(name = "rollout_users", schema = "sodagent")
 public class RolloutUser {
     @Id

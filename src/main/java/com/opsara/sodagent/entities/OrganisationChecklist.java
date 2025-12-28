@@ -12,7 +12,7 @@ import com.vladmihalcea.hibernate.type.json.JsonBinaryType;
 import static com.opsara.sodagent.constants.Constants.MY_CODE;
 
 @Data
-@Entity
+@Entity(name = "SODOrganisationChecklist")
 @Table(name = "organisation_checklist", schema = "sodagent", uniqueConstraints = {
         @UniqueConstraint(columnNames = {"org_id", "version"})
 })

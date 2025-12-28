@@ -4,6 +4,7 @@ package com.opsara.sodagent.scheduler;
 
 import com.opsara.aaaservice.util.MSG91WhatsappUtil;
 import com.opsara.aaaservice.util.URLGenerationUtil;
+import com.opsara.sodagent.controller.AssistantCache;
 import com.opsara.sodagent.entities.RolloutUser;
 import com.opsara.aaaservice.repositories.OrganisationRepository;
 import com.opsara.sodagent.repositories.RolloutUserRepository;
@@ -28,6 +29,7 @@ public class ScheduledTasks {
     private final RolloutUserRepository rolloutUserRepository;
     private final URLGenerationUtil urlGenerationUtil;
     private final MSG91WhatsappUtil msg91WhatsappUtil;
+    private final AssistantCache assistantCache;
 
     @PostConstruct
     public void init() {
@@ -78,4 +80,18 @@ public class ScheduledTasks {
         }
         log.info("Scheduled job finished: sendRemindersAt10amIst");
     }
+
+
+    @Scheduled(cron = "0 0 0/12 * * ?", zone = "Asia/Kolkata")
+    public void clearAssistantCacheOlderThanToday() {
+        log.info("Scheduled job started: clearAssistantCacheOlderThanToday");
+        try {
+            assistantCache.clearAlltillYesterday();
+            log.info("Assistant cache cleaned: removed entries older than today");
+        } catch (Exception ex) {
+            log.error("Failed to clear assistant cache", ex);
+        }
+        log.info("Scheduled job finished: clearAssistantCacheOlderThanToday");
+    }
+
 }

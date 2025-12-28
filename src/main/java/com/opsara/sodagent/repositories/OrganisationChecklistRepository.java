@@ -6,10 +6,13 @@ import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Modifying;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
+import org.springframework.stereotype.Repository;
+import org.springframework.transaction.annotation.Transactional;
 
 import java.util.List;
 import java.util.Optional;
 
+@Repository("sodOrganisationChecklistRepository")
 public interface OrganisationChecklistRepository extends JpaRepository<OrganisationChecklist, Long> {
     List<OrganisationChecklist> findByOrgId(Integer orgId);
 
@@ -19,7 +22,8 @@ public interface OrganisationChecklistRepository extends JpaRepository<Organisat
 
     boolean existsByOrgId(Integer orgId);
 
-    @Modifying
-    @Query("UPDATE OrganisationChecklist oc SET oc.status = 2 WHERE oc.orgId = :orgId")
+    @Modifying(clearAutomatically = true)
+    @Transactional
+    @Query(value = "UPDATE dsragent.organisation_checklist SET status = 2 WHERE org_id = :orgId", nativeQuery = true)
     void markStatusAsTwo(@Param("orgId") Integer orgId);
 }
