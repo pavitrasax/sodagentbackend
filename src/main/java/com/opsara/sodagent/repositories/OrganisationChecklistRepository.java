@@ -24,6 +24,6 @@ public interface OrganisationChecklistRepository extends JpaRepository<Organisat
 
     @Modifying(clearAutomatically = true)
     @Transactional
-    @Query(value = "UPDATE dsragent.organisation_checklist SET status = 2 WHERE org_id = :orgId", nativeQuery = true)
+    @Query(value = "UPDATE sodagent.organisation_checklist SET status = 2 WHERE org_id = :orgId", nativeQuery = true)
     void markStatusAsTwo(@Param("orgId") Integer orgId);
 }
