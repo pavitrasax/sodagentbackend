@@ -21,6 +21,8 @@ import java.time.format.DateTimeFormatter;
 import java.util.List;
 import java.util.Optional;
 
+import static com.opsara.sodagent.constants.DefaultChecklist.DEFAULT_CHECKLIST_JSON;
+
 
 @Service
 public class SODAgentService {
@@ -54,15 +56,13 @@ public class SODAgentService {
                 c.setIsActive(false);
                 maxStatus[0] = c.getStatus() > maxStatus[0] ? c.getStatus() : maxStatus[0];
                 checklistRepository.save(c);
-            }
-            // Inside this loop means there is at least one existing checklist. That means its being modified now. So if its status was 1, upgrade to 2
-            if (maxStatus[0] == 1) {
-                maxStatus[0] = 2;
+                maxStatus[0]=2;
             }
         });
 
+
         if (maxStatus[0] >= 3) {
-            maxStatus[0] = 5; // If there was already a status 2, set new to 3
+            maxStatus[0] = 5; // If it was already rolled out , now on being edited it should become 5
         }
 // Get latest version number
         Integer maxVersion = checklists.stream().map(OrganisationChecklist::getVersion).max(Integer::compareTo).orElse(0);
@@ -115,7 +115,7 @@ public class SODAgentService {
             userChecklistData.setDataJson(dataJson);
             userChecklistData.setCreatedAt(LocalDateTime.now());
             userChecklistData.setFilledForPeriodTs(LocalDateTime.parse(filledForPeriod, DateTimeFormatter.ofPattern("ddMMyyyy-HH:mm")));
-            if(storeId != null && !storeId.isEmpty()) {
+            if (storeId != null && !storeId.isEmpty()) {
                 try {
                     userChecklistData.setStoreId(Integer.parseInt(storeId));
                 } catch (NumberFormatException e) {
