@@ -21,8 +21,6 @@ import java.time.format.DateTimeFormatter;
 import java.util.List;
 import java.util.Optional;
 
-import static com.opsara.sodagent.constants.DefaultChecklist.DEFAULT_CHECKLIST_JSON;
-
 
 @Service
 public class SODAgentService {
@@ -56,7 +54,7 @@ public class SODAgentService {
                 c.setIsActive(false);
                 maxStatus[0] = c.getStatus() > maxStatus[0] ? c.getStatus() : maxStatus[0];
                 checklistRepository.save(c);
-                maxStatus[0]=2;
+                maxStatus[0] = maxStatus[0] == 1 ? 2 : maxStatus[0];
             }
         });
 
@@ -134,8 +132,8 @@ public class SODAgentService {
 
 
     @Transactional
-    public void markChecklistStatusAsTwo(Integer orgId) {
-        checklistRepository.markStatusAsTwo(orgId);
+    public void updateStatusesForMarkingEditedByUser(Integer orgId) {
+        checklistRepository.updateStatusesForMarkingEditedByUser(orgId);
     }
 
     public void saveChecklist(OrganisationChecklist checklist) {

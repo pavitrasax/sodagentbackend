@@ -24,6 +24,18 @@ public interface OrganisationChecklistRepository extends JpaRepository<Organisat
 
     @Modifying(clearAutomatically = true)
     @Transactional
-    @Query(value = "UPDATE sodagent.organisation_checklist SET status = 2 WHERE org_id = :orgId", nativeQuery = true)
+    @Query(value = "UPDATE sodagent.organisation_checklist SET status = 2 WHERE status = 1 AND org_id = :orgId", nativeQuery = true)
     void markStatusAsTwo(@Param("orgId") Integer orgId);
+
+
+    @Modifying(clearAutomatically = true)
+    @Transactional
+    @Query(
+            value = "UPDATE sodagent.organisation_checklist " +
+                    "SET status = CASE WHEN status = 1 THEN 2 WHEN status = 3 THEN 5 ELSE status END " +
+                    "WHERE org_id = :orgId AND status IN (1,3)",
+            nativeQuery = true
+    )
+    int updateStatusesForMarkingEditedByUser(@Param("orgId") Integer orgId);
+
 }

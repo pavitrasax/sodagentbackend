@@ -1,6 +1,5 @@
 package com.opsara.sodagent.tools;
 
-import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.opsara.aaaservice.entities.StoreUser;
@@ -461,10 +460,10 @@ public class SODAgentTools {
 
     }
 
-    @Tool("Skip Edit Checklist. Skips the edit checklist reminder and starts for next stage which is rollout.")
+    @Tool("User does not want to edit default checklist and want to stay with default checklist. Skips the edit checklist reminder and starts for next stage which is rollout.")
     public void skipEditReminder() {
         logger.info("User chose to skip editing the checklist and proceed with rollout.");
-        sodAgentService.markChecklistStatusAsTwo(Integer.valueOf(organisationId));
+        sodAgentService.updateStatusesForMarkingEditedByUser(Integer.valueOf(organisationId));
 
     }
 
