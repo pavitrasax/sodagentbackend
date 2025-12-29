@@ -46,13 +46,18 @@ public class SODAgentService {
 
         // Fetch all checklists for the org only once
         List<OrganisationChecklist> checklists = checklistRepository.findByOrgId(orgId);
-        final Integer[] maxStatus = {2};
+        final Integer[] maxStatus = {1};
+
         // Set all previous versions to inactive
         checklists.forEach(c -> {
             if (Boolean.TRUE.equals(c.getIsActive())) {
                 c.setIsActive(false);
                 maxStatus[0] = c.getStatus() > maxStatus[0] ? c.getStatus() : maxStatus[0];
                 checklistRepository.save(c);
+            }
+            // Inside this loop means there is at least one existing checklist. That means its being modified now. So if its status was 1, upgrade to 2
+            if (maxStatus[0] == 1) {
+                maxStatus[0] = 2;
             }
         });
 

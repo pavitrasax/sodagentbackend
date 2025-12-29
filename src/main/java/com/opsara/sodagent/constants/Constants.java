@@ -7,7 +7,7 @@ public final class Constants {
     public static final String CDN_BASE_URL = System.getenv("CDN_BASE_URL");
     public static final String MY_CODE = "SOD";
     public static final String AWS_BUCKET_NAME = "opsara-sod" + System.getenv("AWS_BUCKET_SUFFIX");
-    public static final String OPSARA_WEB_URL = "https://opsara.io";
+    public static final String OPSARA_WEB_URL = "https://www.opsara.io";
 
     public static final String[] PUBLIC_ENDPOINTS = {
             "/sodagent/getuniqueURL",

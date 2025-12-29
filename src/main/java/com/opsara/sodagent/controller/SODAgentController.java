@@ -115,13 +115,13 @@ public class SODAgentController {
                     responseString += downloadDefaultChecklist(existingChecklist) + "\n\n";
                     responseString += "If you do not want to edit and want to stay with default checklist, please let us know. I will not remind you again. \n\n";
                     responseString += "You can always preview how it looks to store managers here. \n\n";
-                    responseString += "[View Checklist](" + ASSESSMENT_URL + hashtoken + ")" + " \n\n";
+                    responseString += "[View Checklist](" + OPSARA_WEB_URL + ASSESSMENT_URL + hashtoken + ")" + " \n\n";
                     break;
                 case 2:
                     responseString += new String("Your SOD is initialised as per your template. Roll it out now \n\n");
                     responseString += "For rolling out use the prompt like Roll out to Name at mobile. \n\n";
                     responseString += "You can always preview how it looks to store managers here. \n\n";
-                    responseString += "[View Checklist](" + ASSESSMENT_URL + hashtoken + ")" + " \n\n";
+                    responseString += "[View Checklist](" + OPSARA_WEB_URL + OPSARA_WEB_URL + ASSESSMENT_URL + hashtoken + ")" + " \n\n";
                     responseString += "You can also download the checklist you uploaded here. \n\n";
                     responseString += downloadDefaultChecklist(existingChecklist) + "\n\n";
                     break;
@@ -131,13 +131,13 @@ public class SODAgentController {
                     responseString += downloadDefaultChecklist(existingChecklist) + "\n\n";
                     responseString += "If you do not want to edit and want to stay with default checklist, please let us know. I will not remind you again. \n\n";
                     responseString += "You can always preview how it looks to store managers here. \n\n";
-                    responseString += "[View Checklist](" + ASSESSMENT_URL + hashtoken + ")" + " \n\n";
+                    responseString += "[View Checklist](" + OPSARA_WEB_URL + ASSESSMENT_URL + hashtoken + ")" + " \n\n";
                     break;
                 case 5:
                     responseString += new String("Hello. You can start querying the data received from people you rolled it out to.\n\n");
                     responseString +=new String("See sample prompts to query insights in prompts guide.\n\n");
                     responseString += "You can always preview how it looks to store managers here. \n\n";
-                    responseString += "[View Checklist](" + ASSESSMENT_URL + hashtoken + ")" + " \n\n";
+                    responseString += "[View Checklist](" + OPSARA_WEB_URL + ASSESSMENT_URL + hashtoken + ")" + " \n\n";
                     responseString += "You can also download the checklist you uploaded here. \n\n";
                     responseString += downloadDefaultChecklist(existingChecklist) + "\n\n";
 
@@ -145,7 +145,7 @@ public class SODAgentController {
                 default:
                     responseString += new String("Hello. See sample prompts to query insights in prompts guide.\n\n");
                     responseString += "You can always preview how it looks to store managers here. \n\n";
-                    responseString += "[View Checklist](" + ASSESSMENT_URL + hashtoken + ")" + " \n\n";
+                    responseString += "[View Checklist](" + OPSARA_WEB_URL + ASSESSMENT_URL + hashtoken + ")" + " \n\n";
                     responseString += "You can also download the checklist you uploaded here. \n\n";
                     responseString += downloadDefaultChecklist(existingChecklist) + "\n\n";
 
